@@ -1,5 +1,5 @@
 <template>
-  <ckeditor :editor="editor" :value="editorData"></ckeditor>
+  <ckeditor :editor="editor" :value="editorData" class="editor" @ready="prefill" />
 </template>
 
 <script>
@@ -49,7 +49,17 @@ export default {
     },
   },
   mounted() {
-    this.editorData = this.defaultContent
+
+  },
+  methods: {
+    prefill() {
+      this.editorData = this.defaultContent || ''
+    },
   },
 }
 </script>
+<style>
+.ck-content {
+  border: 1px solid #d9d9d9;
+}
+</style>

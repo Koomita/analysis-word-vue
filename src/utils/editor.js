@@ -21,6 +21,8 @@ import ImageResize from '@ckeditor/ckeditor5-image/src/imageresize'
 import Table from '@ckeditor/ckeditor5-table/src/table'
 import TableToolbar from '@ckeditor/ckeditor5-table/src/tabletoolbar'
 
+// import Wirter from '@ckeditor/ckeditor5-engine/src/view/writer'
+
 export default class BalloonEditor extends BalloonEditorBase {}
 
 BalloonEditor.builtinPlugins = [

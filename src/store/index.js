@@ -29,6 +29,7 @@ export default new Vuex.Store({
     fileInfo: {}, // 试卷文件信息
     currentQueClass: '', // 当前题类id
     currentSource: '', // 当前来源id
+    editions: [], // 教材列表
   },
   mutations: {
     // 修改state万金油
@@ -42,11 +43,12 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    // 获取全部题型
+    // 获取全部题类
     async getQuestionClasses({ commit }) {
       const res = await Vue.prototype.$post('/api/paperupload/list/quesclass.do') || { dataInfo: {} }
       commit('updateState', { name: 'questionClasses', value: res.dataInfo.data || [] })
     },
+    // 获取全部题型
     async getQuestionTypes({ commit, state }) {
       const { subjectId } = state
       const res = await Vue.prototype.$post('/api/paperupload/list/questype.do', { subjectId }) || { dataInfo: {} }
@@ -74,25 +76,36 @@ export default new Vuex.Store({
     async getDimensionCapabilities({ commit, state }) {
       const { subjectId } = state
       const res = await Vue.prototype.$post('/api/paperupload/list/dimensionCapability.do', { subjectId }) || { dataInfo: {} }
-      commit('updatestate', { name: 'dimensionCapabilities', value: res.dataInfo.data || [] })
+      commit('updateState', { name: 'dimensionCapabilities', value: res.dataInfo.data || [] })
     },
     // 学科素养列表
     async getDimensionAttainments({ commit, state }) {
       const { subjectId } = state
       const res = await Vue.prototype.$post('/api/paperupload/list/dimensionAttainment.do', { subjectId }) || { dataInfo: {} }
-      commit('updatestate', { name: 'dimensionAttainments', value: res.dataInfo.data || [] })
+      commit('updateState', { name: 'dimensionAttainments', value: res.dataInfo.data || [] })
     },
     // 核心价值列表
     async getDimensionCoreValues({ commit, state }) {
       const { subjectId } = state
       const res = await Vue.prototype.$post('/api/paperupload/list/dimensionCoreValue.do', { subjectId }) || { dataInfo: {} }
-      commit('updatestate', { name: 'dimensionCoreValues', value: res.dataInfo.data || [] })
+      commit('updateState', { name: 'dimensionCoreValues', value: res.dataInfo.data || [] })
     },
-    // 章节列表
-    async getCategories({ commit, state }) {
+    // 教材列表
+    async getEditions({ commit, state }) {
       const { subjectId } = state
-      const res = await Vue.prototype.$post('/api/paperupload/list/category.do', { subjectId }) || { dataInfo: {} }
-      commit('updatestate', { name: 'categories', value: res.dataInfo.data || [] })
+      const res = await Vue.prototype.$post('/api/paperupload/list/edition.do', { subjectId }) || { dataInfo: {} }
+      commit('updateState', { name: 'editions', value: res.dataInfo.data || [] })
+    },
+    // 获取详情页所需所有列表
+    getAllLists({ dispatch }) {
+      dispatch('getQuestionTypes')
+      dispatch('getPoints')
+      dispatch('getSources')
+      dispatch('getDimensionPoints')
+      dispatch('getDimensionCapabilities')
+      dispatch('getDimensionAttainments')
+      dispatch('getDimensionCoreValues')
+      dispatch('getEditions')
     },
   },
   modules: {
