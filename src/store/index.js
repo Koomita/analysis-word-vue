@@ -30,6 +30,28 @@ export default new Vuex.Store({
     currentQueClass: '', // 当前题类id
     currentSource: '', // 当前来源id
     editions: [], // 教材列表
+    items: [{
+      questionTypeId: 1,
+      quesTypeNameId: 1,
+      questionClassId: 1,
+      sourceId: 1,
+      difficultyCoefficient: '0.1',
+      pointIds: [1, 2, 3],
+      bookId: 1,
+      categoryId: 1,
+      editionId: 1,
+      content: '题干',
+      options: '选项',
+      answers: '答案',
+      analysis: '解析',
+      explanation: '分析',
+      comment: '点评',
+      dimensionPointIds: [1, 2, 3],
+      dimensionCapabilityIds: [1, 2, 3],
+      dimensionAttainmentIds: [1, 2, 3],
+      dimensionCoreValueIds: [1, 2, 3],
+      videoUrl: '视频地址',
+    }], // 最后提交的数据格式
   },
   mutations: {
     // 修改state万金油

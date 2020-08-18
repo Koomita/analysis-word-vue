@@ -1,29 +1,29 @@
 <template>
   <div class="modify">
-    <a-spin :spinning="loading">
-      <main-frame>
-        <div slot="content" class="modify-content">
+    <main-frame>
+      <div slot="content" class="modify-content">
+        <a-skeleton :loading="loading" active>
           <h1>{{ step ? '' : '源文件内容' }}</h1>
-          <component :is="currentComponent" :default-content="detail" />
-        </div>
-        <div slot="action" class="modify-action">
-          <actions />
-        </div>
-      </main-frame>
-    </a-spin>
+          <component :is="currentComponent" :value="detail" />
+        </a-skeleton>
+      </div>
+      <div slot="action" class="modify-action">
+        <actions v-if="!loading" />
+      </div>
+    </main-frame>
   </div>
 </template>
 <script>
 import frame from '@/components/frame.vue'
 import { mapMutations, mapState } from 'vuex'
-import editor from './components/editor.vue'
+import paper from './components/paper.vue'
 import actions from './components/actions.vue'
 import questionDetail from './components/questionDetail.vue'
 
 export default {
   components: {
     'main-frame': frame,
-    editor,
+    paper,
     actions,
     questionDetail,
   },
@@ -39,7 +39,7 @@ export default {
   computed: {
     ...mapState(['step', 'fileInfo', 'subjectId']),
     currentComponent() {
-      const components = ['editor', 'questionDetail']
+      const components = ['paper', 'questionDetail']
       return components[this.step]
     },
   },
@@ -51,40 +51,27 @@ export default {
     async getContent() {
       this.loading = true
       const { fileInfo, subjectId } = this
-      const res = await this.$post('/self/analysis/word/parseWord', {
+      const res = (await this.$post('/self/analysis/word/parseWord', {
         ...fileInfo,
         subjectId,
-      }) || { data: {} }
-      const { content, style, subjects } = res.data || { content: '', style: '' }
+      })) || { data: {} }
+      const { content, style, subjects } = res.data || {
+        content: '',
+        style: '',
+      }
       this.updateState({ name: 'subjects', value: subjects })
       this.updateState({ name: 'content', value: content })
       this.appendStyleTag(style)
-      const itemIds = []
-      this.detail = ''
-      if (content.length) {
-        const list = content.filter((el) => Boolean(el.itemId)).map((el) => el.itemId)
-        await content.forEach((el) => {
-          if (list.includes(el.itemId)) {
-            if (!itemIds.includes(el.itemId)) {
-              itemIds.push(el.itemId)
-            }
-            this.detail += el.content.replace('<p class="', '<p class="quesion-block ')
-          } else {
-            this.detail += el.content
-          }
-        })
-      }
-      this.updateState({ name: 'itemIds', value: itemIds })
       this.loading = false
     },
     appendStyleTag(style) {
-    // 增加样式
+      // 增加样式
       const head = document.head || document.getElementsByTagName('head')[0]
       const styleTag = document.createElement('style')
       head.appendChild(styleTag)
       styleTag.type = 'text/css'
       if (styleTag.styleSheet) {
-      // This is required for IE8 and below.
+        // This is required for IE8 and below.
         styleTag.styleSheet.cssText = style
       } else {
         styleTag.appendChild(document.createTextNode(style))
@@ -107,11 +94,5 @@ export default {
   .modify-action {
     background: #fff;
   }
-}
-</style>
-<style>
-.question-block {
-  background:rgba(94,147,252,0.1);
-  border-radius:4px;
 }
 </style>

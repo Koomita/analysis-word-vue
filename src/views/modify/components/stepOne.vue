@@ -14,22 +14,55 @@
      :pagination="false"
      :row-key="record => record.subjectTitle"
     >
-      <template slot="action">
-        <a-button type="link">编辑</a-button>
-        <a-button type="link">删除</a-button>
+      <template slot="action" scope="text, record">
+        <a-button type="link" @click="edit(record)">编辑</a-button>
+        <a-button type="link" @click="del">删除</a-button>
       </template>
     </a-table>
     <p class="btn-box">
       <a-button :disabled="itemIds.length === 0" type="primary" @click="next">下一步</a-button>
     </p>
+    <a-modal
+     :visible="showEditModal"
+     :get-container="getContainer"
+     title="题目设置"
+     ok-text="确定"
+     cancel-text="取消"
+     @ok="save"
+     @cancel="cancel">
+      <a-form :form="form" layout="inline">
+        <a-form-item label="题型">
+          <a-select v-decorator="['questionTypeId', { initialValue: questionTypeId }]" style="min-width: 200px;">
+            <a-select-option
+              v-for="opt in questionTypes"
+              :key="opt.questionTypeId"
+              :value="opt.questionTypeId"
+            >
+              {{ opt.name }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="题量">
+          <a-input-number v-decorator="['count', { initialValue: count }]"></a-input-number>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 <script>
-import { mapMutations, mapState } from 'vuex'
+import { mapMutations, mapState, mapActions } from 'vuex'
 
 export default {
+  data() {
+    return {
+      showEditModal: false, // 显示编辑弹窗
+      questionTypeId: '', // 当前题型id
+      count: '', // 当前题型数量
+      form: this.$form.createForm(this),
+    }
+  },
   computed: {
-    ...mapState(['subjects', 'itemIds']),
+    ...mapState(['subjects', 'itemIds', 'questionTypes']),
     columns() {
       return [{
         title: '题型',
@@ -46,12 +79,35 @@ export default {
       }]
     },
   },
+  mounted() {
+    this.getQuestionTypes()
+  },
   methods: {
     ...mapMutations(['updateState', 'updateCurrentQuestion']),
+    ...mapActions(['getQuestionTypes']),
     next() {
       // 下一步，默认编辑第一题题目详情
       this.updateCurrentQuestion(this.itemIds[0])
       this.updateState({ name: 'step', value: 1 })
+    },
+    edit(record) {
+      const { questionTypeId, count } = record
+      this.questionTypeId = questionTypeId
+      this.count = count
+      this.showEditModal = true
+    },
+    del() {
+      // 删除
+    },
+    save() {
+      // 更新题型数量
+    },
+    cancel() {
+      this.form.resetFields()
+      this.showEditModal = false
+    },
+    getContainer() {
+      return document.querySelector('.modify')
     },
   },
 }
