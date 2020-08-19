@@ -5,6 +5,7 @@
    :wrapper-col="wrapperCol"
    :label-col="labelCol"
   >
+    <slot name="upper-slot" />
     <a-form-item
       v-for="(formItem, fIndex) in formOptions"
       :key="`${formItem.label || 'button'}-${fIndex}`"
@@ -45,13 +46,27 @@
           {{ opt[formItem.props && formItem.props.label || 'label'] }}
         </a-radio-button>
       </a-radio-group>
+      <a-upload
+        v-if="formItem.type === 'upload'"
+        v-decorator="formItem.decorator"
+        :accept="formItem.accept || '*'"
+        :custom-request="formItem.customRequest"
+      >
+        <a-button>{{ formItem.placeholder || '点击上传' }}</a-button>
+      </a-upload>
+      <editor v-if="formItem.type === 'editor'" v-decorator="formItem.decorator" />
       <span v-if="formItem.type === 'text'">{{ formItem.value }}</span>
       <slot v-if="formItem.type === 'slot'" :name="formItem.decorator[0]" />
     </a-form-item>
   </a-form>
 </template>
 <script>
+import editor from './inlineEditor.vue'
+
 export default {
+  components: {
+    editor,
+  },
   props: {
     formOptions: {
       type: Array,
@@ -87,3 +102,29 @@ export default {
   },
 }
 </script>
+<style lang="less" scoped>
+
+.ant-radio-button-wrapper {
+  border-radius: 20px;
+  border-left: 1px solid #e9e9e9;
+  margin-left: 10px;
+  margin-bottom: 5px;
+  &:not(:first-child){
+    &::before {
+      display: none;
+    }
+  }
+  &:first-child, &:last-child {
+    border-radius: 20px;
+  }
+
+}
+.ant-radio-button-wrapper-checked {
+  &:not(.ant-radio-button-wrapper-disabled):focus-within {
+    outline: 0;
+  }
+  &:not(.ant-radio-button-wrapper-disabled) {
+    box-shadow: none;
+  }
+}
+</style>

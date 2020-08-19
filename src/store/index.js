@@ -10,7 +10,7 @@ export default new Vuex.Store({
     storage: window.sessionStorage,
   })],
   state: {
-    step: 2, // 当前步骤
+    step: 0, // 当前步骤
     sources: [], // 来源列表
     dimensionPoints: [], // 必备知识列表
     dimensionCapabilities: [], // 关键能力列表
@@ -128,44 +128,11 @@ export default new Vuex.Store({
       dispatch('getEditions')
     },
     async getPaper({ state, commit }) {
-      // const { testIds } = state
-      // const res = await Vue.prototype.$post('/api/paperupload/view/paper.do', testIds) || { dataInfo: {} }
+      const { testIds } = state
+      const res = await Vue.prototype.$post('/api/paperupload/view/paper.do', testIds) || { dataInfo: {} }
       commit('updateState', {
         name: 'paperInfo',
-        // value: res.dataInfo.data || [
-        value: [
-          {
-            quesTypeNameId: 1849,
-            paragraphName: '一、阅读理解',
-            paragraphNo: 1,
-            score: 0,
-            questionList: [
-              {
-                id: 1112,
-                questionNo: 1,
-                content: '题干',
-              },
-              {
-                id: 1113,
-                questionNo: 2,
-                content: '题干',
-              },
-            ],
-          },
-          {
-            quesTypeNameId: 1917,
-            paragraphName: '二、完形填空',
-            score: 0,
-            paragraphNo: 2,
-            questionList: [
-              {
-                id: 1114,
-                questionNo: 3,
-                content: '题干',
-              },
-            ],
-          },
-        ],
+        value: res.dataInfo.data || [],
       })
     },
   },

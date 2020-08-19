@@ -10,21 +10,23 @@
     @ok="handleSubmit"
     @cancel="$emit('cancel')"
   >
-    <upload-form ref="form" :form-options="options" @change="formChange">
-      <div v-if="showInfo" class="info">
-        注意：仅支持上传 doc 或 docx 格式文件，且无法解析加密的 word 文档，请勿上传此类文件！
-        <a-icon type="close" @click="toggleInfo" />
-      </div>
-    </upload-form>
+    <form-field ref="form" :form-options="options" @change="formChange">
+      <template slot="upper-slot">
+        <div v-if="showInfo" class="info">
+          注意：仅支持上传 doc 或 docx 格式文件，且无法解析加密的 word 文档，请勿上传此类文件！
+          <a-icon type="close" @click="toggleInfo" />
+        </div>
+      </template>
+    </form-field>
   </a-modal>
 </template>
 <script>
 import { mapMutations, mapActions, mapState } from 'vuex'
-import UploadForm from './uploadForm.vue'
+import FormField from '@/components/formField.vue'
 
 export default {
   components: {
-    UploadForm,
+    FormField,
   },
   props: {
     visible: {
@@ -146,7 +148,6 @@ export default {
       }
     },
     normFile(e) {
-      console.log('Upload event:', e)
       if (Array.isArray(e)) {
         return e
       }
@@ -184,6 +185,7 @@ export default {
   border-radius:4px;
   padding: 10px 30px 10px 12px;
   position: relative;
+  margin-bottom: 10px;
   .anticon {
     position: absolute;
     right: 10px;
