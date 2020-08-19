@@ -6,7 +6,9 @@
         <a-step v-for="item in steps" :key="item" :title="item" />
       </a-steps>
     </a-col>
-    <a-col :xs="2" :sm="2" :md="2" :lg="8" :xl="6"></a-col>
+    <a-col :xs="2" :sm="2" :md="2" :lg="8" :xl="6">
+      <a-button v-if="step === 2 && $router.path == '/paper'">返回</a-button>
+    </a-col>
   </a-row>
 </template>
 <script>
@@ -16,7 +18,7 @@ export default {
   computed: {
     ...mapState(['step']),
     steps() {
-      return ['划分题型', '设置答案和编辑内容', '设定分值']
+      return ['划分题型', '设置答案和编辑内容', '生成试卷（可选）']
     },
   },
 }

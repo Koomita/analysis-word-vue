@@ -1,14 +1,14 @@
 <template>
-  <ckeditor :editor="editor" :value="editorData" class="editor" @ready="ready" />
+  <ckeditor :editor="editor" v-model="editorData" @ready="ready" />
 </template>
 
 <script>
 import CKEditor from '@ckeditor/ckeditor5-vue'
-import BalloonEditor from '@/utils/balloonEditor'
+import InlineEditor from '@/utils/inlineEditor'
 // import { toWidget } from '@ckeditor/ckeditor5-widget/src/utils'
 
 export default {
-  name: 'Editor',
+  name: 'InlineEditor',
   components: {
     ckeditor: CKEditor.component,
   },
@@ -24,7 +24,7 @@ export default {
   },
   data() {
     return {
-      editor: BalloonEditor,
+      editor: InlineEditor,
       editorData: '',
     }
   },
@@ -47,37 +47,15 @@ export default {
   },
   methods: {
     ready(editor) {
-      // 增加监听事件
-      editor.model.on('click', (evt, data) => {
-        console.log('click', evt, data)
-      })
       this.editorData = this.value || ''
     },
   },
 }
 </script>
 <style>
-:host ::ng-deep .ck-editor__editable_inline {
+.ck-content, .ck-blurred {
   min-height: 32px !important;
-  border: 1px solid #d9d9d9;
-}
-.question-block {
-  background: rgba(94, 147, 252, 0.1);
-  border-radius: 4px;
-  position: relative;
-  padding: 15px;
-  margin-bottom: 10px;
-}
-.question-block::after {
-  content: ' ';
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-image: url('../../../assets/btn_del.png');
-  background-size: 100%;
-  cursor: pointer;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 4px !important;
 }
 </style>

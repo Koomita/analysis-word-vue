@@ -5,7 +5,7 @@
         <h1>题目列表</h1>
       </a-col>
       <a-col>
-        <a-button type="link">全部清空</a-button>
+        <a-button type="link" @click="clear">全部清空</a-button>
       </a-col>
     </a-row>
     <a-table
@@ -14,7 +14,7 @@
      :pagination="false"
      :row-key="record => record.subjectTitle"
     >
-      <template slot="action" scope="text, record">
+      <template slot="action" slot-scope="text, record">
         <a-button type="link" @click="edit(record)">编辑</a-button>
         <a-button type="link" @click="del">删除</a-button>
       </template>
@@ -98,6 +98,22 @@ export default {
     },
     del() {
       // 删除
+      this.$confirm({
+        title: '提示',
+        content: '确定要删除这个题型吗？',
+        onOk: () => {},
+      })
+    },
+    clear() {
+      // 全部清空
+      this.$confirm({
+        title: '提示',
+        content: '确定要全部清空吗？',
+        onOk: () => {
+          this.updateState({ name: 'itemIds', value: [] })
+          this.updateState({ name: 'subjects', value: [] })
+        },
+      })
     },
     save() {
       // 更新题型数量

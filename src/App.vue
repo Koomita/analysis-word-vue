@@ -4,6 +4,7 @@
       <a-layout-header>
         <ex-header />
       </a-layout-header>
+      <sticker />
       <a-layout-content>
         <router-view />
       </a-layout-content>
@@ -12,10 +13,12 @@
 </template>
 <script>
 import header from '@/components/header.vue'
+import sticker from '@/components/sticker.vue'
 
 export default {
   components: {
     'ex-header': header,
+    sticker,
   },
 }
 </script>

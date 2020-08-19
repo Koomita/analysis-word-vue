@@ -10,7 +10,7 @@ export default new Vuex.Store({
     storage: window.sessionStorage,
   })],
   state: {
-    step: 0, // 当前步骤
+    step: 2, // 当前步骤
     sources: [], // 来源列表
     dimensionPoints: [], // 必备知识列表
     dimensionCapabilities: [], // 关键能力列表
@@ -30,28 +30,9 @@ export default new Vuex.Store({
     currentQueClass: '', // 当前题类id
     currentSource: '', // 当前来源id
     editions: [], // 教材列表
-    items: [{
-      questionTypeId: 1,
-      quesTypeNameId: 1,
-      questionClassId: 1,
-      sourceId: 1,
-      difficultyCoefficient: '0.1',
-      pointIds: [1, 2, 3],
-      bookId: 1,
-      categoryId: 1,
-      editionId: 1,
-      content: '题干',
-      options: '选项',
-      answers: '答案',
-      analysis: '解析',
-      explanation: '分析',
-      comment: '点评',
-      dimensionPointIds: [1, 2, 3],
-      dimensionCapabilityIds: [1, 2, 3],
-      dimensionAttainmentIds: [1, 2, 3],
-      dimensionCoreValueIds: [1, 2, 3],
-      videoUrl: '视频地址',
-    }], // 最后提交的数据格式
+    items: [], // 最后提交的数据格式
+    testIds: [], // 试题id列表
+    paperInfo: [], // 试卷内容
   },
   mutations: {
     // 修改state万金油
@@ -62,6 +43,23 @@ export default new Vuex.Store({
     updateCurrentQuestion(state, itemId) {
       state.currentItemId = itemId
       state.currentQuestion = state.content.filter((el) => el.itemId === itemId)
+    },
+    // 保存题目
+    updateItems(state, item) {
+      if (item) {
+        const { currentItemId, items } = state
+        const index = items.findIndex((el) => el.itemId === currentItemId)
+        if (index > -1) {
+          state.items.splice(index, 1, { itemId: currentItemId, ...item })
+        } else {
+          state.items.push({ itemId: currentItemId, ...item })
+        }
+        // 再把content里面的anser字段改为true
+        state.content.forEach((el) => {
+          el.anser = items.findIndex((obj) => obj.itemId === el.itemId) > -1
+        })
+        Vue.prototype.$message.success('保存成功')
+      }
     },
   },
   actions: {
@@ -128,6 +126,47 @@ export default new Vuex.Store({
       dispatch('getDimensionAttainments')
       dispatch('getDimensionCoreValues')
       dispatch('getEditions')
+    },
+    async getPaper({ state, commit }) {
+      // const { testIds } = state
+      // const res = await Vue.prototype.$post('/api/paperupload/view/paper.do', testIds) || { dataInfo: {} }
+      commit('updateState', {
+        name: 'paperInfo',
+        // value: res.dataInfo.data || [
+        value: [
+          {
+            quesTypeNameId: 1849,
+            paragraphName: '一、阅读理解',
+            paragraphNo: 1,
+            score: 0,
+            questionList: [
+              {
+                id: 1112,
+                questionNo: 1,
+                content: '题干',
+              },
+              {
+                id: 1113,
+                questionNo: 2,
+                content: '题干',
+              },
+            ],
+          },
+          {
+            quesTypeNameId: 1917,
+            paragraphName: '二、完形填空',
+            score: 0,
+            paragraphNo: 2,
+            questionList: [
+              {
+                id: 1114,
+                questionNo: 3,
+                content: '题干',
+              },
+            ],
+          },
+        ],
+      })
     },
   },
   modules: {

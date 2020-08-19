@@ -14,6 +14,11 @@ const routes = [
     name: 'Modify',
     component: () => import('@/views/modify/index.vue'),
   },
+  {
+    path: '/paper',
+    name: 'Paper',
+    component: () => import('@/views/paper/index.vue'),
+  },
 ]
 
 const router = new VueRouter({

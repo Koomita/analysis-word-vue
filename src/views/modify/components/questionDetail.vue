@@ -2,8 +2,15 @@
   <div class="detail-modify">
     <a-form :form="form" :label-col="{span: 3}" :wrapper-col="{span: 18}">
       <a-form-item label="题干">
-        <editor @change="handleEditorChange($event, 'content')" />
+        <editor v-decorator="['content', {
+          rules: [{
+            required: true,
+            message: '请填写题干'
+          }],
+          initialValue: question
+        }]" />
       </a-form-item>
+      <!-- 选择题 -->
       <template v-if="questionTypeId === 1">
         <a-form-item
           v-for="(opt, oIndex) in options"
@@ -11,7 +18,12 @@
           :label="opt"
         >
           <div class="flex-item">
-            <editor style="flex:1;" @change="handleEditorChange($event, opt)" />
+            <editor
+              v-decorator="[opt, {
+                rules: [{ required: true, message: `请填写选项${opt}` }],
+                initialValue: option[opt]
+              }]"
+              style="flex:1;" />
             <span>
               <img
                 v-for="(icon, icIndex) in getIcons(oIndex)"
@@ -29,7 +41,7 @@
        :key="`${currentItemId}-${formItem.label}`"
        :label="formItem.label"
       >
-        <editor v-if="formItem.type === 'editor'" @change="handleChange($event, formItem.decorator[0])" />
+        <editor v-if="formItem.type === 'editor'" v-decorator="formItem.decorator" />
         <a-radio-group v-if="formItem.type === 'radio'" v-decorator="formItem.decorator">
           <a-radio-button
             v-for="opt in formItem.options"
@@ -88,7 +100,7 @@ import { mapState, mapActions, mapMutations } from 'vuex'
 import icon1 from '@/assets/trash.png'
 import icon2 from '@/assets/down.png'
 import icon3 from '@/assets/up.png'
-import editor from './editor.vue'
+import editor from './inlineEditor.vue'
 
 export default {
   components: {
@@ -172,6 +184,7 @@ export default {
         type: 'editor',
         decorator: ['analysis', {
           rules: [{ required: true, message: '请输入解析' }],
+          initialValue: '',
         }],
       }]
       if (this.expend) {
@@ -283,7 +296,7 @@ export default {
   },
   methods: {
     ...mapActions(['getAllLists']),
-    ...mapMutations(['updateState']),
+    ...mapMutations(['updateState', 'updateItems']),
     // 根据教材获取年级信息
     async getGrades(editionId) {
       const { subjectId } = this
@@ -313,6 +326,7 @@ export default {
       }
       return icons
     },
+    // 处理选项
     handleOptionData(futureOption) {
       let str = ''
       for (const [key, value] of Object.entries(futureOption)) {
@@ -381,7 +395,7 @@ export default {
     save() {
       this.form.validateFields((err, values) => {
         if (!err) {
-          console.log(values)
+          this.updateItems(values)
         }
       })
     },

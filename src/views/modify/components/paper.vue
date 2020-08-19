@@ -1,5 +1,5 @@
 <template>
-  <editor :value.sync="value" />
+  <editor :value="value" @change="value = $event" />
 </template>
 <script>
 import { mapState, mapMutations } from 'vuex'
@@ -9,9 +9,43 @@ export default {
   components: {
     editor,
   },
+  data() {
+    return {
+      value: '',
+      init: false,
+    }
+  },
   computed: {
-    ...mapState(['content']),
-    value() {
+    ...mapState(['content', 'itemIds']),
+    itemContents() {
+      return this.content
+        .filter((el) => Boolean(el.itemId))
+        .map((el) => el.itemId)
+    },
+  },
+  watch: {
+    content: {
+      handler() {
+        if (!this.init) {
+          this.setValue()
+        }
+      },
+      immediate: true,
+      deep: true,
+    },
+    itemIds: {
+      handler() {
+        if (this.init) {
+          this.updateValue()
+        }
+      },
+      deep: true,
+    },
+  },
+  methods: {
+    ...mapMutations(['updateState']),
+    setValue() {
+      // 初始化数据
       const itemIds = []
       let detail = ''
       if (this.content.length) {
@@ -36,11 +70,28 @@ export default {
         })
       }
       this.updateState({ name: 'itemIds', value: itemIds })
-      return detail
+      this.value = detail
+      this.init = true
     },
-  },
-  methods: {
-    ...mapMutations(['updateState']),
+    updateValue() {
+      // 更新数据
+      let detail = ''
+      if (this.content.length) {
+        this.content.forEach((el) => {
+          const itemIndex = this.itemIds.find((item) => item === el.itemId)
+          if (itemIndex > -1) {
+            const prefix = itemIndex > 0 ? '</div>' : ''
+            detail += `${prefix}<div class="question-block widget" data-itemid="${el.itemId}">`
+            if (itemIndex === this.itemIds.length - 1) {
+              detail += '</div>'
+            }
+          } else {
+            detail += el.content
+          }
+        })
+      }
+      this.value = detail
+    },
   },
 }
 </script>

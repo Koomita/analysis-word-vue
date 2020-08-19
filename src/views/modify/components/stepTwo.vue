@@ -26,7 +26,7 @@
       </div>
     </div>
     <p class="btn-box">
-      <a-button type="primary">上传题目</a-button>
+      <a-button :disabled="btnDisabled" type="primary" @click="upload">上传题目</a-button>
     </p>
   </div>
 </template>
@@ -38,7 +38,7 @@ export default {
     return {}
   },
   computed: {
-    ...mapState(['questionTypes', 'itemIds', 'content', 'currentItemId']),
+    ...mapState(['questionTypes', 'itemIds', 'content', 'currentItemId', 'items', 'subjectId', 'teacherId']),
     currentQuestions() {
       const list = []
       if (this.questionTypes.length && this.itemIds.length && this.content.length) {
@@ -67,6 +67,9 @@ export default {
       }
       return list
     },
+    btnDisabled() {
+      return this.items.length !== this.itemIds.length
+    },
   },
   methods: {
     ...mapMutations(['updateState']),
@@ -77,6 +80,24 @@ export default {
     },
     changeCurrentQuestion(itemId) {
       this.updateState({ name: 'currentItemId', value: itemId })
+    },
+    async upload() {
+      const { items, subjectId, teacherId } = this
+      const res = await this.$post('/api/paperupload/upload/ques.do', {
+        subjectId,
+        teacherId,
+        items: items.map((el) => {
+          delete el.itemId
+          return el
+        }),
+      })
+      if (res.status === 10001) {
+        const { data } = res.dataInfo // 试题id列表
+        this.updateState({ name: 'testIds', value: data })
+        this.$message.success('上传成功')
+        this.updateState({ name: 'step', value: 2 })
+        this.$router.push('/paper')
+      }
     },
   },
 }

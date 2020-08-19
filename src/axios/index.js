@@ -22,3 +22,9 @@ export default {
     Vue.prototype.$upload = upload
   },
 }
+
+export {
+  post,
+  get,
+  upload,
+}

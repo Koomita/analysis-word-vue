@@ -40,8 +40,7 @@ export default {
           color: #485465;
         }
       }
-      .btn-box {
-        border-top: 1px solid #ccc;
+      /deep/ .btn-box {
         padding-top: 20px;
         text-align: right;
       }
