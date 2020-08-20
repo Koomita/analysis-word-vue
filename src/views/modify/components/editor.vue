@@ -1,5 +1,5 @@
 <template>
-  <ckeditor :editor="editor" :value="editorData" class="editor" @ready="ready" />
+  <ckeditor :editor="editor" v-model="editorData" class="editor" @ready="ready" />
 </template>
 
 <script>
@@ -48,9 +48,9 @@ export default {
   methods: {
     ready(editor) {
       // 增加监听事件
-      editor.model.on('click', (evt, data) => {
-        console.log('click', evt, data)
-      })
+      // editor.model.on('click', (evt, data) => {
+      //   console.log('click', evt, data)
+      // })
       this.editorData = this.value || ''
     },
   },

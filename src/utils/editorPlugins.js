@@ -10,11 +10,11 @@ import SubScript from '@ckeditor/ckeditor5-basic-styles/src/subscript'
 import SuperScript from '@ckeditor/ckeditor5-basic-styles/src/superscript'
 
 import Image from '@ckeditor/ckeditor5-image/src/image'
-// import ImageCaption from '@ckeditor/ckeditor5-image/src/imagecaption'
-// import ImageStyle from '@ckeditor/ckeditor5-image/src/imagestyle'
-// import ImageToolbar from '@ckeditor/ckeditor5-image/src/imagetoolbar'
+import ImageCaption from '@ckeditor/ckeditor5-image/src/imagecaption'
+import ImageStyle from '@ckeditor/ckeditor5-image/src/imagestyle'
+import ImageToolbar from '@ckeditor/ckeditor5-image/src/imagetoolbar'
 import ImageUpload from '@ckeditor/ckeditor5-image/src/imageupload'
-// import ImageResize from '@ckeditor/ckeditor5-image/src/imageresize'
+import ImageResize from '@ckeditor/ckeditor5-image/src/imageresize'
 
 import Table from '@ckeditor/ckeditor5-table/src/table'
 import TableToolbar from '@ckeditor/ckeditor5-table/src/tabletoolbar'
@@ -33,12 +33,12 @@ function UploadAdapterPlugin(editor) {
 
 // 允许标签自带样式
 function AttributeElement(editor) {
-  const tags = ['div', 'img', 'p', 'span']
+  const tags = ['div', 'img']
   for (const tag of tags) {
     // Allow <div> elements in the model.
     editor.model.schema.register(tag, {
-      allowWhere: '$block',
-      allowContentOf: tag === 'div' ? '$root' : '',
+      allowWhere: tag === 'img' ? '$inlineBlock' : '$block',
+      allowContentOf: '$root',
     })
 
     // Allow <div> elements in the model to have all attributes.
@@ -94,11 +94,11 @@ export default [
   SuperScript,
 
   Image,
-  // ImageCaption,
-  // ImageStyle,
-  // ImageToolbar,
+  ImageCaption,
+  ImageStyle,
+  ImageToolbar,
   ImageUpload,
-  // ImageResize,
+  ImageResize,
 
   Table,
   TableToolbar,

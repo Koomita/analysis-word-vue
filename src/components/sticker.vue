@@ -1,5 +1,5 @@
 <template>
-  <a-affix :offset-top="84" class="sticker">
+  <a-affix v-if="step === 2" :offset-top="84" class="sticker">
     <a-row type="flex" justify="center">
       <a-col>
         <form-field ref="form" :form-options="formOptions" layout="inline">
@@ -40,7 +40,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['paperInfo', 'subjectId', 'teacherId']),
+    ...mapState(['step', 'paperInfo', 'subjectId', 'teacherId']),
     formOptions() {
       return [{
         label: '试卷名称',
