@@ -1,10 +1,11 @@
 <template>
-  <ckeditor :editor="editor" v-model="editorData" class="editor" @ready="ready" />
+  <ckeditor :editor="editor" :config="editorConfig" v-model="editorData" class="editor" @ready="ready" />
 </template>
 
 <script>
 import CKEditor from '@ckeditor/ckeditor5-vue'
 import BalloonEditor from '@/utils/balloonEditor'
+import ClickObserver from '@ckeditor/ckeditor5-engine/src/view/observer/clickobserver'
 // import { toWidget } from '@ckeditor/ckeditor5-widget/src/utils'
 
 export default {
@@ -26,6 +27,7 @@ export default {
     return {
       editor: BalloonEditor,
       editorData: '',
+      editorConfig: {},
     }
   },
   watch: {
@@ -48,9 +50,22 @@ export default {
   methods: {
     ready(editor) {
       // 增加监听事件
-      // editor.model.on('click', (evt, data) => {
-      //   console.log('click', evt, data)
-      // })
+      const { view } = editor.editing
+      const viewDocument = view.document
+
+      view.addObserver(ClickObserver)
+
+      editor.listenTo(viewDocument, 'click', (evt, data) => {
+        const modelElement = editor.editing.mapper.toModelElement(data.target)
+        if (modelElement) {
+          const { name } = modelElement
+          const { className } = data.domTarget
+          if (name === 'div' && className === 'del-icon') {
+          // 监听删除按钮点击事件，删除题块
+            this.$emit('del', data.domTarget.dataset.itemid)
+          }
+        }
+      })
       this.editorData = this.value || ''
     },
   },
@@ -68,8 +83,7 @@ export default {
   padding: 15px;
   margin-bottom: 10px;
 }
-.question-block::after {
-  content: ' ';
+.question-block .del-icon {
   position: absolute;
   right: 10px;
   top: 10px;

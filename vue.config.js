@@ -28,7 +28,6 @@ module.exports = {
       new CKEditorWebpackPlugin({
         // See https://ckeditor.com/docs/ckeditor5/latest/features/ui-language.html
         language: 'zh-cn',
-
         // Append translations to the file matching the `app` name.
         translationsOutputFile: /app/,
       }),

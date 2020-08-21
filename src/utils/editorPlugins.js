@@ -9,6 +9,12 @@ import Strikethrough from '@ckeditor/ckeditor5-basic-styles/src/strikethrough'
 import SubScript from '@ckeditor/ckeditor5-basic-styles/src/subscript'
 import SuperScript from '@ckeditor/ckeditor5-basic-styles/src/superscript'
 
+import SpecialCharacters from '@ckeditor/ckeditor5-special-characters/src/specialcharacters'
+import SpecialCharactersMathematical from '@ckeditor/ckeditor5-special-characters/src/specialcharactersmathematical'
+import SpecialCharactersCurrency from '@ckeditor/ckeditor5-special-characters/src/specialcharacterscurrency'
+import SpecialCharactersArrows from '@ckeditor/ckeditor5-special-characters/src/specialcharactersarrows'
+import SpecialCharactersEssentials from '@ckeditor/ckeditor5-special-characters/src/specialcharactersessentials'
+
 import Image from '@ckeditor/ckeditor5-image/src/image'
 import ImageCaption from '@ckeditor/ckeditor5-image/src/imagecaption'
 import ImageStyle from '@ckeditor/ckeditor5-image/src/imagestyle'
@@ -23,62 +29,15 @@ import Widget from '@ckeditor/ckeditor5-widget/src/widget'
 
 import UploadAdapter from './uploadAdapter'
 
+import TagAttribute from './tagAttribute'
+import CustomFigureAttributes from './CustomFigureAttributes'
+
 // import RestrictedEditingMode from '@ckeditor/ckeditor5-restricted-editing/src/restrictededitingmode'
 
 // import Wirter from '@ckeditor/ckeditor5-engine/src/view/writer'
 
 function UploadAdapterPlugin(editor) {
   editor.plugins.get('FileRepository').createUploadAdapter = (loader) => new UploadAdapter(loader, '/api/upload/upload/many/base64.do')
-}
-
-// 允许标签自带样式
-function AttributeElement(editor) {
-  const tags = ['div', 'img']
-  for (const tag of tags) {
-    // Allow <div> elements in the model.
-    editor.model.schema.register(tag, {
-      allowWhere: tag === 'img' ? '$inlineBlock' : '$block',
-      allowContentOf: '$root',
-    })
-
-    // Allow <div> elements in the model to have all attributes.
-    editor.model.schema.addAttributeCheck((context) => context.endsWith(tag))
-
-    // The view-to-model converter converting a view <div> with all its attributes to the model.
-    editor.conversion.for('upcast').elementToElement({
-      view: tag,
-      model: (viewElement, modelWriter) => modelWriter.createElement(tag, viewElement.getAttributes()),
-    })
-
-    // The model-to-view converter for the <div> element (attributes are converted separately).
-    editor.conversion.for('downcast').elementToElement({
-      model: tag,
-      view: tag,
-    })
-
-    // The model-to-view converter for <div> attributes.
-    // Note that a lower-level, event-based API is used here.
-    editor.conversion.for('downcast').add((dispatcher) => {
-      dispatcher.on('attribute', (evt, data, conversionApi) => {
-        // Convert <div> attributes only.
-        if (data.item.name !== tag) {
-          return
-        }
-
-        const viewWriter = conversionApi.writer
-        const viewDiv = conversionApi.mapper.toViewElement(data.item)
-
-        // In the model-to-view conversion we convert changes.
-        // An attribute can be added or removed or changed.
-        // The below code handles all 3 cases.
-        if (data.attributeNewValue) {
-          viewWriter.setAttribute(data.attributeKey, data.attributeNewValue, viewDiv)
-        } else {
-          viewWriter.removeAttribute(data.attributeKey, viewDiv)
-        }
-      })
-    })
-  }
 }
 
 export default [
@@ -93,6 +52,12 @@ export default [
   SubScript,
   SuperScript,
 
+  SpecialCharacters,
+  SpecialCharactersMathematical,
+  SpecialCharactersCurrency,
+  SpecialCharactersArrows,
+  SpecialCharactersEssentials,
+
   Image,
   ImageCaption,
   ImageStyle,
@@ -104,6 +69,7 @@ export default [
   TableToolbar,
 
   Widget,
-  AttributeElement,
+  TagAttribute,
   UploadAdapterPlugin,
+  CustomFigureAttributes,
 ]

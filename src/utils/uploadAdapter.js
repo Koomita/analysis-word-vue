@@ -17,9 +17,7 @@ export default class UploadAdapter {
         vm.$post(this.url, [{
           ...data,
           data: imgData,
-        }], {
-
-        }).then((res) => {
+        }]).then((res) => {
           const { extend, msg } = res || { extend: [], msg: '网络错误' }
           if (extend && extend.length) {
             resolve({ default: extend[0] })

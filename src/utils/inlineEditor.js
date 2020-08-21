@@ -13,13 +13,14 @@ InlineEditor.defaultConfig = {
     'strikethrough',
     'subscript',
     'superscript',
+    'specialcharacters',
     '|',
     'imageUpload',
     'insertTable',
   ],
   image: {
-    // toolbar: ['imageTextAlternative', '|', 'imageStyle:alignLeft', 'imageStyle:full', 'imageStyle:alignRight'],
-    // styles: ['full', 'alignLeft', 'alignRight'],
+    toolbar: ['imageTextAlternative', '|', 'imageStyle:alignLeft', 'imageStyle:full', 'imageStyle:alignRight'],
+    styles: ['full', 'alignLeft', 'alignRight'],
   },
   table: {
     contentToolbar: [

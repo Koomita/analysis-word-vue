@@ -26,6 +26,10 @@
           </span>
         </div>
       </template>
+      <!-- 完形填空 -->
+      <template v-if="questionTypeId === 5">
+        <div slot=""></div>
+      </template>
       <div slot="para" class="flex-select">
         <a-select v-model="editionId" placeholder="请选择" @change="getGrades">
           <a-select-option v-for="item in editions" :key="item.id" :value="item.id">

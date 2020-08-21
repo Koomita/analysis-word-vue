@@ -39,6 +39,11 @@ export default new Vuex.Store({
     updateState(state, { name, value }) {
       state[name] = value
     },
+    // 删除题块
+    delItem(state, id) {
+      const index = state.itemIds.findIndex((el) => el === id)
+      state.itemIds.splice(index, 1)
+    },
     // 修改当前题目信息
     updateCurrentQuestion(state, itemId) {
       state.currentItemId = itemId

@@ -1,5 +1,5 @@
 <template>
-  <editor :value.sync="value" />
+  <editor :value.sync="value" @del="del" />
 </template>
 <script>
 import { mapState, mapMutations } from 'vuex'
@@ -8,6 +8,7 @@ import editor from './editor.vue'
 export default {
   components: {
     editor,
+    // TinyEditor,
   },
   data() {
     return {
@@ -43,7 +44,19 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['updateState']),
+    ...mapMutations(['updateState', 'delItem']),
+    del(itemId) {
+      // 删除题块
+      this.delItem(itemId)
+    },
+    // 分析数据是否为表格
+    checkTable(content) {
+      const isTable = /<table[^>]*>[\s\S]*<\/table>/gi.test(content)
+      if (isTable) {
+        return content
+      }
+      return `<p>${content}</p>`
+    },
     setValue() {
       // 初始化数据
       const itemIds = []
@@ -55,14 +68,14 @@ export default {
             if (!itemIds.includes(el.itemId)) {
               const prefix = itemIds.length ? '</div>' : ''
               itemIds.push(el.itemId)
-              detail += `${prefix}<div class="question-block" data-itemid="${el.itemId}">`
+              detail += `${prefix}<div class="question-block" data-itemid="${el.itemId}"><div class="del-icon" data-itemid="${el.itemId}"></div>`
             }
-            detail += el.content
+            detail += this.checkTable(el.content)
             if (paraIndex === this.itemContents.length - 1) {
               detail += '</div>'
             }
           } else {
-            detail += el.content
+            detail += this.checkTable(el.content)
           }
         })
       }
@@ -75,15 +88,20 @@ export default {
       let detail = ''
       if (this.content.length) {
         this.content.forEach((el) => {
-          const itemIndex = this.itemIds.find((item) => item === el.itemId)
-          if (itemIndex > -1) {
-            const prefix = itemIndex > 0 ? '</div>' : ''
-            detail += `${prefix}<div class="question-block" data-itemid="${el.itemId}">`
-            if (itemIndex === this.itemIds.length - 1) {
-              detail += '</div>'
+          const { itemId } = el
+          const currentIndex = this.itemContents.findIndex((item) => item === itemId)
+          const firstIndex = this.itemContents.indexOf(itemId)
+          const lastIndex = this.itemContents.lastIndexOf(itemId)
+          if (currentIndex > -1) {
+            if (this.itemIds.includes(itemId)) {
+              const prefix = currentIndex === firstIndex ? `<div class="question-block" data-itemid="${el.itemId}"><div class="del-icon" data-itemid="${el.itemId}"></div>` : ''
+              const append = currentIndex === lastIndex ? '</div>' : ''
+              detail += `${prefix}${this.checkTable(el.content)}${append}`
+            } else {
+              detail += this.checkTable(el.content)
             }
           } else {
-            detail += el.content
+            detail += this.checkTable(el.content)
           }
         })
       }

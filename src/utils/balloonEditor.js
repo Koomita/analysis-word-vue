@@ -13,6 +13,7 @@ BalloonEditor.defaultConfig = {
     'strikethrough',
     'subscript',
     'superscript',
+    'specialcharacters',
     '|',
     'imageUpload',
     'insertTable',
