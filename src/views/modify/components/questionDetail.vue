@@ -1,57 +1,92 @@
 <template>
   <div class="detail-modify">
-    <form-field :form-options="formOptions" :label-col="{span: 3}" :wrapper-col="{span: 18}">
-      <!-- 选择题 -->
-      <template v-if="questionTypeId === 1">
-        <div
-          v-for="(opt, oIndex) in options"
-          :key="`detail-${currentItemId}-${opt}`"
-          :slot="opt"
-          class="flex-item"
-        >
-          <editor
-            v-decorator="[opt, {
-                rules: [{ required: true, message: `请填写选项${opt}` }],
-                initialValue: option[opt]
+    <a-skeleton :loading="loading" active>
+      <form-field
+        ref="formField"
+        :form-options="formOptions"
+        :label-col="{span: 3}"
+        :wrapper-col="{span: 18}"
+      >
+        <!-- 选择题 -->
+        <template v-if="option.length && questionTypeId !== 5">
+          <div
+            v-for="(opt, oIndex) in option"
+            :key="`detail-${currentItemId}-${opt.option}`"
+            :slot="opt.option"
+            class="flex-item"
+          >
+            <editor
+              v-decorator="[name || opt.option, {
+                rules: [{ required: true, message: `请填写选项${opt.option}` }],
+                initialValue: opt.value
               }]"
-            style="flex:1;"
-          />
-          <span>
-            <img
-              v-for="(icon, icIndex) in getIcons(oIndex)"
-              :key="`icon-${oIndex}-${icIndex}`"
-              :src="icon.src"
-              @click="icon.func(oIndex)"
+              style="flex:1;"
             />
-          </span>
+            <span>
+              <img
+                v-for="(icon, icIndex) in getIcons(oIndex)"
+                :key="`icon-${oIndex}-${icIndex}`"
+                :src="icon.src"
+                @click="icon.func(oIndex)"
+              />
+            </span>
+          </div>
+        </template>
+        <!-- 完形填空 -->
+        <template v-if="questionTypeId === 5">
+          <template v-for="(ans, ansIndex) in option">
+            <div
+              v-for="(opt, oIndex) in ans.options"
+              :key="`${ans.answerNo}${ansIndex}-${opt.option}${oIndex}`"
+              :slot="`${ans.answerNo}-${opt.option}`"
+            >
+              <!-- <p v-if="oIndex === 0">{{ ans.answerNo }}</p> -->
+              <div class="flex-item">
+                <editor
+                  v-decorator="[`${ans.answerNo}-${opt.option}`, {
+                    rules: [{ required: true, message: `请填写选项${opt.option}` }],
+                    initialValue: opt.value
+                  }]"
+                  style="flex:1;"
+                />
+                <span>
+                  <img
+                    v-for="(icon, icIndex) in getIcons(oIndex)"
+                    :key="`icon-${oIndex}-${icIndex}`"
+                    :src="icon.src"
+                    @click="icon.func(oIndex)"
+                  />
+                </span>
+              </div>
+              <p v-if="oIndex === ans.options.length - 1" class="del-tip" @click="delTest(ansIndex)">删除该小题</p>
+            </div>
+          </template>
+        </template>
+        <div slot="para" class="flex-select">
+          <a-select v-model="editionId" placeholder="请选择" @change="getGrades">
+            <a-select-option
+              v-for="item in editions"
+              :key="item.id"
+              :value="item.id"
+            >{{ item.editionName }}</a-select-option>
+          </a-select>
+          <a-select v-model="gradeId" placeholder="请选择" @change="getCategories">
+            <a-select-option v-for="item in grades" :key="item.id" :value="item.id">{{ item.name }}</a-select-option>
+          </a-select>
+          <a-select v-model="cateId" placeholder="请选择">
+            <a-select-option
+              v-for="item in categories"
+              :key="item.id"
+              :value="item.id"
+            >{{ item.text }}</a-select-option>
+          </a-select>
         </div>
-      </template>
-      <!-- 完形填空 -->
-      <template v-if="questionTypeId === 5">
-        <div slot=""></div>
-      </template>
-      <div slot="para" class="flex-select">
-        <a-select v-model="editionId" placeholder="请选择" @change="getGrades">
-          <a-select-option v-for="item in editions" :key="item.id" :value="item.id">
-            {{ item.editionName }}
-          </a-select-option>
-        </a-select>
-        <a-select v-model="gradeId" placeholder="请选择" @change="getCategories">
-          <a-select-option v-for="item in grades" :key="item.id" :value="item.id">
-            {{ item.name }}
-          </a-select-option>
-        </a-select>
-        <a-select v-model="cateId" placeholder="请选择">
-          <a-select-option v-for="item in categories" :key="item.id" :value="item.id">
-            {{ item.text }}
-          </a-select-option>
-        </a-select>
-      </div>
-    </form-field>
-    <p class="btn-box">
-      <a-button @click="expend = !expend">{{ expend ? '收起更多' : '更多选项..' }}</a-button>
-      <a-button type="primary" @click="save">保存</a-button>
-    </p>
+      </form-field>
+      <p class="btn-box">
+        <a-button @click="expend = !expend">{{ expend ? '收起更多' : '更多选项..' }}</a-button>
+        <a-button type="primary" @click="save">保存</a-button>
+      </p>
+    </a-skeleton>
   </div>
 </template>
 <script>
@@ -61,6 +96,7 @@ import icon2 from '@/assets/down.png'
 import icon3 from '@/assets/up.png'
 import FormField from '@/components/formField.vue'
 import editor from '@/components/inlineEditor.vue'
+import { fillOption } from '@/utils/regexp'
 
 export default {
   components: {
@@ -79,6 +115,9 @@ export default {
       editionId: '',
       gradeId: '',
       cateId: '',
+      loading: false,
+      answerCurrentIndex: [], // 选项答案当前所在currentQuestion数组中的index
+      fileList: [],
     }
   },
   computed: {
@@ -97,7 +136,7 @@ export default {
       'subjectId',
     ]),
     formOptions() {
-      const options = [
+      let formOptions = [
         {
           label: '题干',
           decorator: [
@@ -112,10 +151,11 @@ export default {
               initialValue: this.question,
             },
           ],
+          type: 'editor',
         },
         {
           label: '答案',
-          type: this.questionTypeId === 1 ? 'radio' : 'slot',
+          type: this.questionTypeId === 1 ? 'radio' : 'editor',
           options: this.options.map((el) => ({ label: el, value: el })),
           props: {
             label: 'label',
@@ -191,8 +231,33 @@ export default {
           ],
         },
       ]
+      if (this.option.length) {
+        // 选择题
+        const { option } = this
+        const list = []
+        if (this.questionTypeId === 5) {
+          option.forEach((el) => {
+            el.options.forEach((item, index) => {
+              list.push({
+                label: index === 0 ? `${el.answerNo}   ${item.option}` : item.option,
+                type: 'slot',
+                decorator: [`${el.answerNo}-${item.option}`],
+              })
+            })
+          })
+        } else {
+          option.forEach((el) => {
+            list.push({
+              label: `${el.option}`,
+              type: 'slot',
+              decorator: [el.option],
+            })
+          })
+        }
+        formOptions = [formOptions[0], ...list, ...formOptions.slice(1)]
+      }
       if (this.expend) {
-        return options.concat([
+        formOptions = formOptions.concat([
           {
             label: '题类',
             type: 'radio',
@@ -265,12 +330,13 @@ export default {
           {
             label: '解析视频',
             type: 'upload',
-            accept: 'media',
+            accept: '.mp4',
             decorator: [
               'videoUrl',
               {
                 valuePropName: 'fileList',
                 getValueFromEvent: this.normFile,
+                initialValue: this.fileList,
               },
             ],
             placeholder: '上传视频',
@@ -278,41 +344,50 @@ export default {
           },
         ])
       }
-      return options
+      return formOptions
     },
     // 题目
     question() {
-      return (
-        (this.currentQuestion.length
-          && this.currentQuestion.map((el) => el.content).join(''))
-        || ''
-      )
+      if (!this.currentQuestion || !this.currentQuestion.length || this.loading) return ''
+      if ([1, 5].includes(this.questionTypeId)) {
+        return this.currentQuestion
+          .slice(0, this.currentQuestion.length - 1)
+          .map((el) => el.content)
+          .join('')
+      }
+      return this.currentQuestion.map((el) => el.content).join('') || ''
     },
     // 题目类型id
     questionTypeId() {
-      if (this.currentQuestion.length) { return this.currentQuestion[0].questionTypeId }
+      if (this.currentQuestion.length) {
+        return this.currentQuestion[0].questionTypeId
+      }
       return 0
     },
     // 选项
     option() {
-      if (this.questionTypeId === 1) {
+      if (!this.questionTypeId) return []
+      if (this.questionTypeId === 5) {
         const answers = this.currentQuestion[this.currentQuestion.length - 1]
-        const result = {}
-        console.log(answers)
-        for (const i of this.options) {
-          let option = answers.content.split(i)[1].split('</span>')
-          if (option[1].indexOf('<img') > -1) {
-            option = option[1].toString()
-          } else {
-            option = option[0].replace('．', '')
-          }
-          Object.assign(result, {
-            [i]: option,
-          })
-        }
-        return result
+        // 完形填空选项
+        const { text } = answers
+        return fillOption(text)
       }
-      return {}
+      let options = []
+      this.currentQuestion.filter((el) => el.options && el.options.length).forEach((el) => {
+        options = options.concat(el.options || [])
+      })
+      return options
+    },
+  },
+  watch: {
+    currentItemId: {
+      handler() {
+        this.loading = true
+        setTimeout(() => {
+          this.loading = false
+        }, 200)
+      },
     },
   },
   mounted() {
@@ -322,7 +397,32 @@ export default {
     ...mapActions(['getAllLists']),
     ...mapMutations(['updateState', 'updateItems']),
     // 上传视频
-    uploadVideo({ file }) {},
+    async uploadVideo(options) {
+      const {
+        onSuccess, onError, file, onProgress,
+      } = options
+      const that = this
+      const reader = new FileReader()
+      reader.readAsArrayBuffer(file)
+      reader.onload = async () => {
+        const binary = this.result
+        onProgress()
+        try {
+          const res = await that.$upload('/api/upload/fileUploadByByte.do', { file: binary })
+          if (res.dataInfo.path) {
+            onSuccess('Ok')
+            this.fileList = [{ ...that.fileList[0], url: res.dataInfo.path, status: 'done' }]
+          } else {
+            const { msg } = res || { res: '网络出错' }
+            that.$message.error(msg)
+            onError(msg)
+          }
+        } catch (err) {
+          that.$message.error('请求出错')
+          onError({ err })
+        }
+      }
+    },
     normFile(e) {
       if (Array.isArray(e)) {
         return e
@@ -367,6 +467,10 @@ export default {
         return [icons[0], icons[2]]
       }
       return icons
+    },
+    // 删除小题
+    delTest(index) {
+
     },
     // 处理选项
     handleOptionData(futureOption) {
@@ -456,7 +560,7 @@ export default {
     },
     // 保存内容
     save() {
-      this.form.validateFields((err, values) => {
+      this.$refs.formField.form.validateFields((err, values) => {
         if (!err) {
           this.updateItems(values)
         }
@@ -492,8 +596,16 @@ export default {
       cursor: pointer;
     }
     span {
-      width: 100px;
+      width: 80px;
+      margin-right: -80px;
+      text-align: center;
     }
+  }
+  .del-tip {
+    color: #999;
+    text-align: right;
+    cursor: pointer;
+    margin-top: 10px;
   }
   .flex-select {
     display: flex;

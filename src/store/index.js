@@ -52,19 +52,35 @@ export default new Vuex.Store({
     // 保存题目
     updateItems(state, item) {
       if (item) {
-        const { currentItemId, items } = state
-        const index = items.findIndex((el) => el.itemId === currentItemId)
+        const { currentItemId } = state
+        const index = state.items.findIndex((el) => el.itemId === currentItemId)
         if (index > -1) {
-          state.items.splice(index, 1, { itemId: currentItemId, ...item })
+          state.items.splice(index, 1, { ...state.items[index], ...item })
         } else {
           state.items.push({ itemId: currentItemId, ...item })
         }
         // 再把content里面的anser字段改为true
         state.content.forEach((el) => {
-          el.anser = items.findIndex((obj) => obj.itemId === el.itemId) > -1
+          if (el.itemId) {
+            el.anser = state.items.findIndex((obj) => obj.itemId === el.itemId) > -1
+          }
         })
         Vue.prototype.$message.success('保存成功')
       }
+    },
+    // 删除题型
+    delQuestionType(state, questionTypeId) {
+      console.log(questionTypeId)
+      const tmp = new Map()
+      const contents = state.content.filter((el) => state.itemIds.includes(el.itemId)).filter((el) => el.questionTypeId === questionTypeId).map((el) => el.itemId).filter((item) => !tmp.has(item) && tmp.set(item, 1))
+      contents.forEach((el) => {
+        const index = state.itemIds.findIndex((item) => item === el.itemId)
+        if (index > -1) {
+          state.itemIds.splice(index, 1)
+        }
+      })
+      const subIndex = state.subjects.findIndex((el) => el.questionTypeId === questionTypeId)
+      state.subjects.splice(subIndex, 1)
     },
   },
   actions: {

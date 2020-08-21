@@ -60,7 +60,7 @@ export default {
         if (modelElement) {
           const { name } = modelElement
           const { className } = data.domTarget
-          if (name === 'div' && className === 'del-icon') {
+          if (name === 'p' && className.includes('mt8')) {
           // 监听删除按钮点击事件，删除题块
             this.$emit('del', data.domTarget.dataset.itemid)
           }
@@ -83,7 +83,8 @@ export default {
   padding: 15px;
   margin-bottom: 0;
 }
-.mt8 .del-icon {
+.mt8::after {
+  content: ' ';
   position: absolute;
   right: 10px;
   top: 10px;
@@ -96,5 +97,9 @@ export default {
 }
 .mt8 {
   margin-top: 8px;
+}
+
+.inline-image {
+  display: inline-block;
 }
 </style>

@@ -17,7 +17,7 @@
           <span
            v-for="(num, numIndex) in que.number"
            :key="`${que.questionTypeId}-${num}`"
-           :class="['block', !que.anser ? 'error': '', checkActive(que, numIndex) ? 'active' : '']"
+           :class="['block', !que.answer[numIndex] ? 'error': '', checkActive(que, numIndex) ? 'active' : '']"
            @click="changeCurrentQuestion(que.itemId[numIndex])"
           >
             {{ num }}
@@ -39,12 +39,15 @@ export default {
   },
   computed: {
     ...mapState(['questionTypes', 'itemIds', 'content', 'currentItemId', 'items', 'subjectId', 'teacherId']),
+    questions() {
+      if (!this.content || !this.content.length || !this.itemIds || !this.itemIds.length) return []
+      return this.content.filter((el) => this.itemIds.includes(el.itemId))
+    },
     currentQuestions() {
       const list = []
       if (this.questionTypes.length && this.itemIds.length && this.content.length) {
-        const questions = this.content.filter((el) => this.itemIds.includes(el.itemId))
         this.itemIds.forEach((el, i) => {
-          const target = questions.filter((item) => item.itemId === el)
+          const target = this.questions.filter((item) => item.itemId === el)
           if (target.length) {
             const { questionTypeId, anser } = target[0]
             const index = list.findIndex((item) => item.questionTypeId === questionTypeId)
@@ -53,7 +56,7 @@ export default {
                 itemId: [el],
                 number: [`${i + 1}`],
                 questions: [target],
-                anser,
+                answer: [anser],
                 questionTypeId,
                 questionTypeName: this.questionTypes.find((obj) => obj.questionTypeId === questionTypeId)?.name,
               })
@@ -61,6 +64,7 @@ export default {
               list[index].number.push(`${i + 1}`)
               list[index].itemId.push(el)
               list[index].questions.push(target)
+              list[index].answer.push(anser)
             }
           }
         })
@@ -72,14 +76,14 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['updateState']),
+    ...mapMutations(['updateState', 'updateCurrentQuestion']),
     checkActive(que, i) {
       const { itemId } = que
       const index = itemId.findIndex((el) => el === this.currentItemId)
       return index === i
     },
     changeCurrentQuestion(itemId) {
-      this.updateState({ name: 'currentItemId', value: itemId })
+      this.updateCurrentQuestion(itemId)
     },
     async upload() {
       const { items, subjectId, teacherId } = this

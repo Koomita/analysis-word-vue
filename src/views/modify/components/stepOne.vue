@@ -16,7 +16,7 @@
     >
       <template slot="action" slot-scope="text, record">
         <a-button type="link" @click="edit(record)">编辑</a-button>
-        <a-button type="link" @click="del">删除</a-button>
+        <a-button type="link" @click="del(record)">删除</a-button>
       </template>
     </a-table>
     <p class="btn-box">
@@ -83,7 +83,7 @@ export default {
     this.getQuestionTypes()
   },
   methods: {
-    ...mapMutations(['updateState', 'updateCurrentQuestion']),
+    ...mapMutations(['updateState', 'updateCurrentQuestion', 'delQuestionType']),
     ...mapActions(['getQuestionTypes']),
     next() {
       // 下一步，默认编辑第一题题目详情
@@ -96,12 +96,15 @@ export default {
       this.count = count
       this.showEditModal = true
     },
-    del() {
+    del(record) {
+      const { questionTypeId } = record
       // 删除
       this.$confirm({
         title: '提示',
         content: '确定要删除这个题型吗？',
-        onOk: () => {},
+        onOk: () => {
+          this.delQuestionType(questionTypeId)
+        },
       })
     },
     clear() {

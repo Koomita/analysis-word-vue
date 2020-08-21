@@ -1,14 +1,14 @@
 <template>
-  <editor :value.sync="value" @del="del" />
+  <editor :value="value" @del="del" />
 </template>
 <script>
 import { mapState, mapMutations } from 'vuex'
 import editor from './editor.vue'
+// import editor from '@/components/tinymce.vue'
 
 export default {
   components: {
     editor,
-    // TinyEditor,
   },
   data() {
     return {
@@ -55,16 +55,17 @@ export default {
       let detail = ''
       if (this.content.length) {
         this.content.forEach((el) => {
-          const paraIndex = this.itemContents.findIndex((item) => item === el.itemId)
+          const { content, itemId } = el
+          const paraIndex = this.itemContents.findIndex((item) => item === itemId)
           if (paraIndex > -1) {
-            if (!itemIds.includes(el.itemId)) {
-              itemIds.push(el.itemId)
-              detail += `<p class="question-block mt8" data-itemid="${el.itemId}"><span class="del-icon" data-itemid="${el.itemId}"></span>${el.content}</p>`
+            if (!itemIds.includes(itemId)) {
+              itemIds.push(itemId)
+              detail += `<p class="question-block mt8" data-itemid="${itemId}">${content}</p>`
             } else {
-              detail += `<p class="question-block">${el.content}</p>`
+              detail += `<p class="question-block data-itemid="${itemId}"">${content}</p>`
             }
           } else {
-            detail += `<p>${el.content}</p>`
+            detail += `<p>${content}</p>`
           }
         })
       }
@@ -77,21 +78,17 @@ export default {
       let detail = ''
       if (this.content.length) {
         this.content.forEach((el) => {
-          const { itemId } = el
+          const { itemId, content } = el
           const currentIndex = this.itemContents.findIndex((item) => item === itemId)
           const firstIndex = this.itemContents.indexOf(itemId)
-          if (currentIndex > -1) {
-            if (this.itemIds.includes(itemId)) {
-              if (currentIndex === firstIndex) {
-                detail += `<p class="question-block mt8" data-itemid="${el.itemId}"><sapn class="del-icon" data-itemid="${el.itemId}"></sapn>${el.content}</p>`
-              } else {
-                detail += `<p class="question-block">${el.content}</p>`
-              }
+          if (currentIndex > -1 && this.itemIds.includes(itemId)) {
+            if (currentIndex === firstIndex) {
+              detail += `<p class="question-block mt8" data-itemid="${itemId}">${content}</p>`
             } else {
-              detail += `<p>${el.content}</p>`
+              detail += `<p class="question-block" data-itemid="${itemId}">${content}</p>`
             }
           } else {
-            detail += `<p>${el.content}</p>`
+            detail += `<p>${content}</p>`
           }
         })
       }

@@ -14,6 +14,7 @@ BalloonEditor.defaultConfig = {
     'subscript',
     'superscript',
     'specialcharacters',
+    'blockquote',
     '|',
     'imageUpload',
     'insertTable',
@@ -30,4 +31,5 @@ BalloonEditor.defaultConfig = {
     ],
   },
   language: 'zh-cn',
+  autoParagraph: true,
 }

@@ -8,6 +8,7 @@ import Underline from '@ckeditor/ckeditor5-basic-styles/src/underline'
 import Strikethrough from '@ckeditor/ckeditor5-basic-styles/src/strikethrough'
 import SubScript from '@ckeditor/ckeditor5-basic-styles/src/subscript'
 import SuperScript from '@ckeditor/ckeditor5-basic-styles/src/superscript'
+import BlockQuote from '@ckeditor/ckeditor5-block-quote/src/blockquote'
 
 import SpecialCharacters from '@ckeditor/ckeditor5-special-characters/src/specialcharacters'
 import SpecialCharactersMathematical from '@ckeditor/ckeditor5-special-characters/src/specialcharactersmathematical'
@@ -30,7 +31,7 @@ import Widget from '@ckeditor/ckeditor5-widget/src/widget'
 import UploadAdapter from './uploadAdapter'
 
 import TagAttribute from './tagAttribute'
-import CustomFigureAttributes from './CustomFigureAttributes'
+// import CustomFigureAttributes from './CustomFigureAttributes'
 
 // import RestrictedEditingMode from '@ckeditor/ckeditor5-restricted-editing/src/restrictededitingmode'
 
@@ -51,6 +52,7 @@ export default [
   Strikethrough,
   SubScript,
   SuperScript,
+  BlockQuote,
 
   SpecialCharacters,
   SpecialCharactersMathematical,
@@ -71,5 +73,5 @@ export default [
   Widget,
   TagAttribute,
   UploadAdapterPlugin,
-  CustomFigureAttributes,
+  // CustomFigureAttributes,
 ]

@@ -10,6 +10,7 @@
       v-for="(formItem, fIndex) in formOptions"
       :key="`${formItem.label || 'button'}-${fIndex}`"
       :label="formItem.label"
+      :extra="formItem.extra"
     >
       <a-input
         v-if="formItem.type === 'input'"

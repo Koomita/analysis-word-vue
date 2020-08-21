@@ -25,9 +25,12 @@ export default {
 }
 </script>
 <style lang="less" scoped>
+.ant-affix {
+  overflow-y: scroll;
+}
 .box {
   background: #fff;
-  height: fit-content;
+  max-height: 100%;
   .case {
     padding: 10px 24px;
     box-sizing: border-box;
