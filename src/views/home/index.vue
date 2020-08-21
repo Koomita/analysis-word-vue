@@ -32,6 +32,9 @@ export default {
       modalVisible: false,
     }
   },
+  mounted() {
+    this.updateState({ name: 'step', value: -1 })
+  },
   methods: {
     ...mapMutations(['updateState']),
     toggle() {
@@ -41,7 +44,6 @@ export default {
       // 更新当前来源、题类
       this.updateState({ name: 'currentSource', value: values.source })
       this.updateState({ name: 'currentQueClass', value: values.queClass })
-      this.updateState({ name: 'step', value: 0 })
       this.modalVisible = false
       // 下一步
       this.$router.push('/modify')

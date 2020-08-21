@@ -49,14 +49,6 @@ export default {
       // 删除题块
       this.delItem(itemId)
     },
-    // 分析数据是否为表格
-    checkTable(content) {
-      const isTable = /<table[^>]*>[\s\S]*<\/table>/gi.test(content)
-      if (isTable) {
-        return content
-      }
-      return `<p>${content}</p>`
-    },
     setValue() {
       // 初始化数据
       const itemIds = []
@@ -66,16 +58,13 @@ export default {
           const paraIndex = this.itemContents.findIndex((item) => item === el.itemId)
           if (paraIndex > -1) {
             if (!itemIds.includes(el.itemId)) {
-              const prefix = itemIds.length ? '</div>' : ''
               itemIds.push(el.itemId)
-              detail += `${prefix}<div class="question-block" data-itemid="${el.itemId}"><div class="del-icon" data-itemid="${el.itemId}"></div>`
-            }
-            detail += this.checkTable(el.content)
-            if (paraIndex === this.itemContents.length - 1) {
-              detail += '</div>'
+              detail += `<p class="question-block mt8" data-itemid="${el.itemId}"><span class="del-icon" data-itemid="${el.itemId}"></span>${el.content}</p>`
+            } else {
+              detail += `<p class="question-block">${el.content}</p>`
             }
           } else {
-            detail += this.checkTable(el.content)
+            detail += `<p>${el.content}</p>`
           }
         })
       }
@@ -91,17 +80,18 @@ export default {
           const { itemId } = el
           const currentIndex = this.itemContents.findIndex((item) => item === itemId)
           const firstIndex = this.itemContents.indexOf(itemId)
-          const lastIndex = this.itemContents.lastIndexOf(itemId)
           if (currentIndex > -1) {
             if (this.itemIds.includes(itemId)) {
-              const prefix = currentIndex === firstIndex ? `<div class="question-block" data-itemid="${el.itemId}"><div class="del-icon" data-itemid="${el.itemId}"></div>` : ''
-              const append = currentIndex === lastIndex ? '</div>' : ''
-              detail += `${prefix}${this.checkTable(el.content)}${append}`
+              if (currentIndex === firstIndex) {
+                detail += `<p class="question-block mt8" data-itemid="${el.itemId}"><sapn class="del-icon" data-itemid="${el.itemId}"></sapn>${el.content}</p>`
+              } else {
+                detail += `<p class="question-block">${el.content}</p>`
+              }
             } else {
-              detail += this.checkTable(el.content)
+              detail += `<p>${el.content}</p>`
             }
           } else {
-            detail += this.checkTable(el.content)
+            detail += `<p>${el.content}</p>`
           }
         })
       }

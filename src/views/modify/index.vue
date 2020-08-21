@@ -44,6 +44,7 @@ export default {
     },
   },
   created() {
+    this.updateState({ name: 'step', value: 0 })
     this.getContent()
   },
   methods: {

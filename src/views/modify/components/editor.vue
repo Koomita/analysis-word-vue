@@ -81,9 +81,9 @@ export default {
   border-radius: 4px;
   position: relative;
   padding: 15px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
-.question-block .del-icon {
+.mt8 .del-icon {
   position: absolute;
   right: 10px;
   top: 10px;
@@ -93,5 +93,8 @@ export default {
   background-image: url('../../../assets/btn_del.png');
   background-size: 100%;
   cursor: pointer;
+}
+.mt8 {
+  margin-top: 8px;
 }
 </style>
