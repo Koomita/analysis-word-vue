@@ -4,7 +4,6 @@
 <script>
 import { mapState, mapMutations } from 'vuex'
 import editor from './editor.vue'
-// import editor from '@/components/tinymce.vue'
 
 export default {
   components: {
@@ -60,7 +59,7 @@ export default {
           if (paraIndex > -1) {
             if (!itemIds.includes(itemId)) {
               itemIds.push(itemId)
-              detail += `<p class="question-block mt8" data-itemid="${itemId}">${content}</p>`
+              detail += `<p class="question-block mt8" data-itemid="${itemId}"><span class="del-icon" data-itemid="${itemId}"></span>${content}</p>`
             } else {
               detail += `<p class="question-block data-itemid="${itemId}"">${content}</p>`
             }
@@ -79,11 +78,13 @@ export default {
       if (this.content.length) {
         this.content.forEach((el) => {
           const { itemId, content } = el
+          const itemIndex = this.itemIds.findIndex((item) => item === itemId)
           const currentIndex = this.itemContents.findIndex((item) => item === itemId)
           const firstIndex = this.itemContents.indexOf(itemId)
-          if (currentIndex > -1 && this.itemIds.includes(itemId)) {
+          // console.log(itemIndex, currentIndex, content)
+          if (itemIndex > -1 && currentIndex > -1) {
             if (currentIndex === firstIndex) {
-              detail += `<p class="question-block mt8" data-itemid="${itemId}">${content}</p>`
+              detail += `<p class="question-block mt8" data-itemid="${itemId}"><span class="del-icon" data-itemid="${itemId}">${content}</p>`
             } else {
               detail += `<p class="question-block" data-itemid="${itemId}">${content}</p>`
             }

@@ -59,9 +59,8 @@ export default {
         const modelElement = editor.editing.mapper.toModelElement(data.target)
         if (modelElement) {
           const { name } = modelElement
-          const { className } = data.domTarget
-          if (name === 'p' && className.includes('mt8')) {
-          // 监听删除按钮点击事件，删除题块
+          if (name === 'delIcon') {
+            // 监听删除按钮点击事件，删除题块
             this.$emit('del', data.domTarget.dataset.itemid)
           }
         }
@@ -82,9 +81,9 @@ export default {
   position: relative;
   padding: 15px;
   margin-bottom: 0;
+  position: relative;
 }
-.mt8::after {
-  content: ' ';
+.del-icon {
   position: absolute;
   right: 10px;
   top: 10px;

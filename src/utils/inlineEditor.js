@@ -3,7 +3,7 @@ import editorPlugins from './editorPlugins'
 
 export default class InlineEditor extends InlineEditorBase {}
 
-InlineEditor.builtinPlugins = editorPlugins
+InlineEditor.builtinPlugins = editorPlugins.slice(0, editorPlugins.length - 1)
 
 InlineEditor.defaultConfig = {
   toolbar: [

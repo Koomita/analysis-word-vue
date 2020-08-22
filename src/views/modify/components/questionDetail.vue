@@ -16,7 +16,7 @@
             class="flex-item"
           >
             <editor
-              v-decorator="[name || opt.option, {
+              v-decorator="[opt.option, {
                 rules: [{ required: true, message: `请填写选项${opt.option}` }],
                 initialValue: opt.value
               }]"
@@ -96,9 +96,10 @@ import icon2 from '@/assets/down.png'
 import icon3 from '@/assets/up.png'
 import FormField from '@/components/formField.vue'
 import editor from '@/components/inlineEditor.vue'
-import { fillOption } from '@/utils/regexp'
+import formOptionMixins from './formOptionMixins'
 
 export default {
+  mixins: [formOptionMixins],
   components: {
     FormField,
     editor,
@@ -116,8 +117,9 @@ export default {
       gradeId: '',
       cateId: '',
       loading: false,
-      answerCurrentIndex: [], // 选项答案当前所在currentQuestion数组中的index
-      fileList: [],
+      delOptionIndex: [], // 删除选项的index，完形填空用
+      adjustOptionIndex: [], // 调整的选项索引，完形填空用
+      fileList: [], // 上传视频
     }
   },
   computed: {
@@ -135,217 +137,6 @@ export default {
       'editions',
       'subjectId',
     ]),
-    formOptions() {
-      let formOptions = [
-        {
-          label: '题干',
-          decorator: [
-            'content',
-            {
-              rules: [
-                {
-                  required: true,
-                  message: '请填写题干',
-                },
-              ],
-              initialValue: this.question,
-            },
-          ],
-          type: 'editor',
-        },
-        {
-          label: '答案',
-          type: this.questionTypeId === 1 ? 'radio' : 'editor',
-          options: this.options.map((el) => ({ label: el, value: el })),
-          props: {
-            label: 'label',
-            value: 'value',
-          },
-          decorator: [
-            'answers',
-            {
-              rules: [{ required: true, message: '请选择答案' }],
-              initialValue: '',
-            },
-          ],
-        },
-        {
-          label: '难度',
-          type: 'radio',
-          decorator: [
-            'difficultyCoefficient',
-            {
-              rule: [
-                {
-                  required: true,
-                  message: '请选择难度',
-                },
-              ],
-            },
-          ],
-          options: [
-            {
-              label: '基础题',
-              value: '0.7',
-            },
-            {
-              label: '中档题',
-              value: '0.5',
-            },
-            {
-              label: '难题',
-              value: '0.3',
-            },
-          ], // 难度（越小越难） 基础题：0.7 中档题：0.5 难题：0.3
-        },
-        {
-          label: '知识点',
-          type: 'select',
-          options: this.points,
-          mode: 'multiple',
-          props: {
-            label: 'pointName',
-            value: 'id',
-          },
-          decorator: [
-            'pointIds',
-            {
-              rules: [
-                {
-                  required: true,
-                  message: '请选择知识点',
-                },
-              ],
-            },
-          ],
-        },
-        {
-          label: '解析',
-          type: 'editor',
-          decorator: [
-            'analysis',
-            {
-              rules: [{ required: true, message: '请输入解析' }],
-              initialValue: '',
-            },
-          ],
-        },
-      ]
-      if (this.option.length) {
-        // 选择题
-        const { option } = this
-        const list = []
-        if (this.questionTypeId === 5) {
-          option.forEach((el) => {
-            el.options.forEach((item, index) => {
-              list.push({
-                label: index === 0 ? `${el.answerNo}   ${item.option}` : item.option,
-                type: 'slot',
-                decorator: [`${el.answerNo}-${item.option}`],
-              })
-            })
-          })
-        } else {
-          option.forEach((el) => {
-            list.push({
-              label: `${el.option}`,
-              type: 'slot',
-              decorator: [el.option],
-            })
-          })
-        }
-        formOptions = [formOptions[0], ...list, ...formOptions.slice(1)]
-      }
-      if (this.expend) {
-        formOptions = formOptions.concat([
-          {
-            label: '题类',
-            type: 'radio',
-            options: this.questionClasses,
-            props: {
-              label: 'questionClassName',
-              value: 'id',
-            },
-            decorator: ['questionClassId'],
-          },
-          {
-            label: '来源',
-            type: 'radio',
-            options: this.sources,
-            props: {
-              label: 'sourceName',
-              value: 'sourceId',
-            },
-            decorator: ['sourceId'],
-          },
-          {
-            label: '章节信息',
-            type: 'slot',
-            decorator: ['para'],
-          },
-          {
-            label: '必备知识',
-            type: 'select',
-            mode: 'multiple',
-            options: this.dimensionPoints,
-            decorator: ['dimensionPointIds'],
-            props: {
-              label: 'text',
-              value: 'id',
-            },
-          },
-          {
-            label: '关键能力',
-            type: 'select',
-            mode: 'multiple',
-            options: this.dimensionCapabilities,
-            decorator: ['dimensionCapabilityIds'],
-            props: {
-              label: 'text',
-              value: 'id',
-            },
-          },
-          {
-            label: '学科素养',
-            type: 'select',
-            mode: 'multiple',
-            options: this.dimensionAttainments,
-            decorator: ['dimensionAttainmentIds'],
-            props: {
-              label: 'text',
-              value: 'id',
-            },
-          },
-          {
-            label: '核心价值',
-            type: 'select',
-            mode: 'multiple',
-            options: this.dimensionCoreValues,
-            decorator: ['dimensionCoreValueIds'],
-            props: {
-              label: 'text',
-              value: 'id',
-            },
-          },
-          {
-            label: '解析视频',
-            type: 'upload',
-            accept: '.mp4',
-            decorator: [
-              'videoUrl',
-              {
-                valuePropName: 'fileList',
-                getValueFromEvent: this.normFile,
-                initialValue: this.fileList,
-              },
-            ],
-            placeholder: '上传视频',
-            customRequest: this.uploadVideo,
-          },
-        ])
-      }
-      return formOptions
-    },
     // 题目
     question() {
       if (!this.currentQuestion || !this.currentQuestion.length || this.loading) return ''
@@ -370,8 +161,34 @@ export default {
       if (this.questionTypeId === 5) {
         const answers = this.currentQuestion[this.currentQuestion.length - 1]
         // 完形填空选项
-        const { text } = answers
-        return fillOption(text)
+        let { text } = answers
+        const options = []
+        do {
+          const value = /（\d+）[^（）]+/.exec(text)[0]
+          options.push(value)
+          text = text.replace(value, '')
+        } while (text)
+        const option = options.filter((el, index) => !this.delOptionIndex.includes(index)).map((el) => {
+          let temp = el
+          const answerNo = /（\d+）/.exec(temp)[0]
+          temp = temp.replace(answerNo, '')
+          const opts = []
+          do {
+            const currentOpt = /[A-Z]．+[^A-Z]+/.exec(temp)
+            const value = /[^A-Z^．]+/.exec(currentOpt)[0]
+            const opt = /[A-Z]/.exec(temp)[0]
+            opts.push({
+              option: opt,
+              value,
+            })
+            temp = temp.replace(`${opt}．${value}`, '')
+          } while (temp)
+          return {
+            answerNo,
+            options: opts,
+          }
+        })
+        return option
       }
       let options = []
       this.currentQuestion.filter((el) => el.options && el.options.length).forEach((el) => {
@@ -384,6 +201,7 @@ export default {
     currentItemId: {
       handler() {
         this.loading = true
+        this.delOptionIndex = []
         setTimeout(() => {
           this.loading = false
         }, 200)
@@ -470,7 +288,13 @@ export default {
     },
     // 删除小题
     delTest(index) {
-
+      this.$confirm({
+        title: '提示',
+        content: '确定要删除该小题吗?',
+        onOk: () => {
+          this.delOptionIndex.push(index)
+        },
+      })
     },
     // 处理选项
     handleOptionData(futureOption) {

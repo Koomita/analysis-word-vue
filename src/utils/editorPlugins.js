@@ -71,7 +71,7 @@ export default [
   TableToolbar,
 
   Widget,
-  TagAttribute,
   UploadAdapterPlugin,
+  TagAttribute,
   // CustomFigureAttributes,
 ]
