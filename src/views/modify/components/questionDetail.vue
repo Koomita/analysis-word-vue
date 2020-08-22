@@ -87,25 +87,29 @@
         <a-button type="primary" @click="save">保存</a-button>
       </p>
     </a-skeleton>
+    <complete-modal :visible="showCompleteModal" />
   </div>
 </template>
 <script>
 import { mapState, mapActions, mapMutations } from 'vuex'
-import icon1 from '@/assets/trash.png'
-import icon2 from '@/assets/down.png'
-import icon3 from '@/assets/up.png'
+import icon1 from '@/assets/trash@2x.png'
+import icon2 from '@/assets/down@2x.png'
+import icon3 from '@/assets/up@2x.png'
 import FormField from '@/components/formField.vue'
 import editor from '@/components/inlineEditor.vue'
 import formOptionMixins from './formOptionMixins'
+import completeModal from './completeModal.vue'
 
 export default {
   mixins: [formOptionMixins],
   components: {
     FormField,
     editor,
+    completeModal,
   },
   data() {
     return {
+      showCompleteModal: false,
       options: ['A', 'B', 'C', 'D'],
       expend: false,
       form: this.$form.createForm(this, {
@@ -140,13 +144,14 @@ export default {
     // 题目
     question() {
       if (!this.currentQuestion || !this.currentQuestion.length || this.loading) return ''
-      if ([1, 5].includes(this.questionTypeId)) {
-        return this.currentQuestion
-          .slice(0, this.currentQuestion.length - 1)
-          .map((el) => el.content)
-          .join('')
-      }
-      return this.currentQuestion.map((el) => el.content).join('') || ''
+      // if ([1, 5].includes(this.questionTypeId)) {
+      //   return this.currentQuestion
+      //     .slice(0, this.currentQuestion.length - 1)
+      //     .map((el) => el.content)
+      //     .join('')
+      // }
+      // 把有选项的content从题干中筛除再map
+      return this.currentQuestion.filter((el) => !el.options || !el.options.length).map((el) => el.content).join('') || ''
     },
     // 题目类型id
     questionTypeId() {
@@ -204,7 +209,7 @@ export default {
         this.delOptionIndex = []
         setTimeout(() => {
           this.loading = false
-        }, 200)
+        }, 100)
       },
     },
   },
@@ -418,6 +423,7 @@ export default {
     align-items: center;
     img {
       cursor: pointer;
+      width: 24px;
     }
     span {
       width: 80px;

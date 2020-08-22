@@ -44,6 +44,10 @@ export default {
     },
   },
   created() {
+    const { teacherId } = this.$route.query
+    if (teacherId) {
+      this.updateState({ name: 'teacherId', value: teacherId })
+    }
     this.updateState({ name: 'step', value: 0 })
     this.getContent()
   },

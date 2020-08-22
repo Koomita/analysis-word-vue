@@ -11,7 +11,6 @@ export default class UploadAdapter {
   upload() {
     return new Promise((resolve, reject) => {
       const { file } = this.loader
-      console.log(file)
       const data = { type: `.${file.type.split('/')[1]}` }
       const getData = (imgData) => {
       // Send the request.
