@@ -20,7 +20,9 @@
                 rules: [{ required: true, message: `请填写选项${opt.option}` }],
                 initialValue: opt.value
               }]"
-              style="flex:1;"
+              :id="opt.option"
+              :inline="true"
+              style="flex: 1;"
             />
             <span>
               <img
@@ -47,6 +49,8 @@
                     rules: [{ required: true, message: `请填写选项${opt.option}` }],
                     initialValue: opt.value
                   }]"
+                  :id="`${ans.answerNo}-${opt.option}`"
+                  :inline="true"
                   style="flex:1;"
                 />
                 <span>
@@ -96,7 +100,7 @@ import icon1 from '@/assets/trash@2x.png'
 import icon2 from '@/assets/down@2x.png'
 import icon3 from '@/assets/up@2x.png'
 import FormField from '@/components/formField.vue'
-import editor from '@/components/inlineEditor.vue'
+import editor from '@/components/tinymce.vue'
 import formOptionMixins from './formOptionMixins'
 import completeModal from './completeModal.vue'
 
@@ -128,8 +132,8 @@ export default {
   },
   computed: {
     ...mapState([
+      'content',
       'currentItemId',
-      'currentQuestion',
       'questionTypes',
       'points',
       'sources',
@@ -141,15 +145,16 @@ export default {
       'editions',
       'subjectId',
     ]),
+    currentQuestion() {
+      return this.content.filter((el) => el.itemId === this.currentItemId)
+    },
     // 题目
     question() {
       if (!this.currentQuestion || !this.currentQuestion.length || this.loading) return ''
-      // if ([1, 5].includes(this.questionTypeId)) {
-      //   return this.currentQuestion
-      //     .slice(0, this.currentQuestion.length - 1)
-      //     .map((el) => el.content)
-      //     .join('')
-      // }
+      // 完形填空题目
+      if (this.questionTypeId === 5) {
+        return this.currentQuestion.filter((el, i) => i < this.currentQuestion.length - 1).map((el) => el.content).join('')
+      }
       // 把有选项的content从题干中筛除再map
       return this.currentQuestion.filter((el) => !el.options || !el.options.length).map((el) => el.content).join('') || ''
     },
@@ -303,85 +308,40 @@ export default {
     },
     // 处理选项
     handleOptionData(futureOption) {
-      let str = ''
-      for (const [key, value] of Object.entries(futureOption)) {
-        str += `<span>${key}．${value}</span>`
-      }
-      this.updateState({
-        name: 'currentQuestion',
-        value: [
-          ...this.currentQuestion.slice(0, this.currentQuestion.length - 1),
-          {
-            ...this.currentQuestion[this.currentQuestion.length - 1],
-            content: str,
-          },
-        ],
-      })
+      // 调整顺序，修改content里的对应选项
+      // this.updateState({
+      //   name: 'content',
+      //   value: [
+      //     ...this.currentQuestion.filter((el) => !el.options || !el.options.length),
+      //     ...futureOption,
+      //   ],
+      // })
     },
     del(optionIndex) {
       // 删除一个选项
-      const arr = [
-        'A',
-        'B',
-        'C',
-        'D',
-        'E',
-        'F',
-        'G',
-        'H',
-        'I',
-        'J',
-        'K',
-        'L',
-        'M',
-        'N',
-        'O',
-        'P',
-        'Q',
-        'R',
-        'S',
-        'T',
-      ]
-      const futureOption = {}
-      for (let i = this.options.length - 1; i > -1; i -= 1) {
-        const current = this.options[i]
-        const prev = this.options[i - 1]
-        if (i !== optionIndex) {
-          if (i > optionIndex) {
-            // 在删除的元素后的都往前一位
-            Object.assign(futureOption, {
-              [prev]: this.option[current],
-            })
-          } else {
-            // 在删除元素前的位置不变
-            Object.assign(futureOption, {
-              [current]: this.option[current],
-            })
-          }
-        }
+      this.move('del', optionIndex)
+    },
+    move(direction, optionIndex) {
+      const prev = this.option[optionIndex - 1]
+      const current = this.option[optionIndex]
+      const next = this.option[optionIndex + 1]
+      const options = this.option
+      if (direction === 'up') {
+        options.splice(optionIndex, 1, { option: current.option, value: prev.value })
+        options.splice(optionIndex - 1, 1, { option: prev.option, value: current.value })
+      } else if (direction === 'down') {
+        options.splice(optionIndex, 1, { option: current.option, value: next.value })
+        options.splice(optionIndex + 1, 1, { option: next.option, value: prev.value })
+      } else {
+        options.splice(optionIndex, 1)
       }
-      this.options = arr.slice(0, this.options.length - 1)
-      this.handleOptionData(futureOption)
+      this.handleOptionData(options)
     },
     moveDown(optionIndex) {
-      const current = this.options[optionIndex]
-      const next = this.options[optionIndex + 1]
-      const futureOption = {
-        ...this.option,
-        [current]: this.option[next],
-        [next]: this.option[current],
-      }
-      this.handleOptionData(futureOption)
+      this.move('down', optionIndex)
     },
     moveUp(optionIndex) {
-      const current = this.options[optionIndex]
-      const prev = this.options[optionIndex - 1]
-      const futureOption = {
-        ...this.option,
-        [current]: this.option[prev],
-        [prev]: this.option[current],
-      }
-      this.handleOptionData(futureOption)
+      this.move('up', optionIndex)
     },
     // 添加选项
     pushOption() {

@@ -55,14 +55,14 @@
       >
         <a-button>{{ formItem.placeholder || '点击上传' }}</a-button>
       </a-upload>
-      <editor v-if="formItem.type === 'editor'" v-decorator="formItem.decorator" />
+      <editor v-if="formItem.type === 'editor'" v-decorator="formItem.decorator" :id="formItem.decorator[0]" :inline="true" height="fit-content" />
       <span v-if="formItem.type === 'text'">{{ formItem.value }}</span>
       <slot v-if="formItem.type === 'slot'" :name="formItem.decorator[0]" />
     </a-form-item>
   </a-form>
 </template>
 <script>
-import editor from './inlineEditor.vue'
+import editor from './tinymce.vue'
 
 export default {
   components: {

@@ -1,9 +1,9 @@
 <template>
-  <editor :value="value" @del="del" />
+  <editor :value="value" :height="editorHeight" @del="del" />
 </template>
 <script>
 import { mapState, mapMutations } from 'vuex'
-import editor from './editor.vue'
+import editor from '@/components/tinymce.vue'
 
 export default {
   components: {
@@ -13,6 +13,7 @@ export default {
     return {
       value: '',
       init: false,
+      editorHeight: document.body.offsetHeight - 150,
     }
   },
   computed: {
@@ -59,7 +60,7 @@ export default {
           if (paraIndex > -1) {
             if (!itemIds.includes(itemId)) {
               itemIds.push(itemId)
-              detail += `<p class="question-block mt8" data-itemid="${itemId}"><span class="del-icon" data-itemid="${itemId}"></span>${content}</p>`
+              detail += `<p class="question-block mt8" data-itemid="${itemId}"><span class="del-icon" data-itemid="${itemId}">&nbsp;</span>${content}</p>`
             } else {
               detail += `<p class="question-block data-itemid="${itemId}"">${content}</p>`
             }
@@ -76,15 +77,14 @@ export default {
       // 更新数据
       let detail = ''
       if (this.content.length) {
+        const itemIds = []
         this.content.forEach((el) => {
           const { itemId, content } = el
           const itemIndex = this.itemIds.findIndex((item) => item === itemId)
-          const currentIndex = this.itemContents.findIndex((item) => item === itemId)
-          const firstIndex = this.itemContents.indexOf(itemId)
-          // console.log(itemIndex, currentIndex, content)
-          if (itemIndex > -1 && currentIndex > -1) {
-            if (currentIndex === firstIndex) {
-              detail += `<p class="question-block mt8" data-itemid="${itemId}"><span class="del-icon" data-itemid="${itemId}">${content}</p>`
+          if (itemIndex > -1) {
+            if (!itemIds.includes(itemId)) {
+              itemIds.push(itemId)
+              detail += `<p class="question-block mt8" data-itemid="${itemId}"><span class="del-icon" data-itemid="${itemId}">&nbsp;</span>${content}</p>`
             } else {
               detail += `<p class="question-block" data-itemid="${itemId}">${content}</p>`
             }

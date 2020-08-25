@@ -76,14 +76,14 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['updateState', 'updateCurrentQuestion']),
+    ...mapMutations(['updateState']),
     checkActive(que, i) {
       const { itemId } = que
       const index = itemId.findIndex((el) => el === this.currentItemId)
       return index === i
     },
     changeCurrentQuestion(itemId) {
-      this.updateCurrentQuestion(itemId)
+      this.updateState({ name: 'currentItemId', value: itemId })
     },
     async upload() {
       const { items, subjectId, teacherId } = this

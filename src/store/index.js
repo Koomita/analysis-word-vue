@@ -25,7 +25,6 @@ export default new Vuex.Store({
     points: [], // 知识点列表
     itemIds: [], // 当前试卷有的题目id列表
     currentItemId: '', // 当前编辑题目id
-    currentQuestion: [], // 当前题目
     fileInfo: {}, // 试卷文件信息
     currentQueClass: '', // 当前题类id
     currentSource: '', // 当前来源id
@@ -43,11 +42,6 @@ export default new Vuex.Store({
     delItem(state, id) {
       const index = state.itemIds.findIndex((el) => el === id)
       state.itemIds.splice(index, 1)
-    },
-    // 修改当前题目信息
-    updateCurrentQuestion(state, itemId) {
-      state.currentItemId = itemId
-      state.currentQuestion = state.content.filter((el) => el.itemId === itemId)
     },
     // 保存题目
     updateItems(state, item) {

@@ -1,0 +1,22 @@
+.question-block {
+  background: rgba(94, 147, 252, 0.1);
+  border-radius: 4px;
+  position: relative;
+  padding: 15px;
+  margin: 0;
+  position: relative;
+}
+.del-icon {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-image: url('./btn_del.png');
+  background-size: 100%;
+  cursor: pointer;
+}
+.mt8 {
+  margin-top: 8px;
+}
