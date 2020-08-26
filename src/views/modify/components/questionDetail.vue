@@ -70,6 +70,9 @@
               </div>
               <template v-if="oIndex === ans.options.length - 1">
                 <p class="del-tip" @click="delTest(ansIndex)">删除该小题</p>
+                <template v-if="ansIndex === option.length - 1">
+                  <a-button class="add-btn" @click="pushOption"> <a-icon type="plus" /> 添加小题</a-button>
+                </template>
               </template>
             </div>
           </template>
@@ -136,6 +139,7 @@ export default {
       delOptionIndex: [], // 删除选项的index，完形填空用
       adjustOptionIndex: [], // 调整的选项索引，完形填空用
       fileList: [], // 上传视频
+      optionLen: 4, // 选项数
     }
   },
   computed: {
@@ -313,13 +317,15 @@ export default {
         title: '提示',
         content: '确定要删除该小题吗?',
         onOk: async () => {
+          this.loading = true
           // 删除完形填空小题
           let table = '<table>'
           let text = ''
           await this.option.forEach((el, i) => {
             if (i !== index) {
-              table += `<tr>${el.answerNo}`
-              text += el.answerNo
+              const newIndex = i < index ? i : i - 1
+              table += `<tr>（${newIndex}）`
+              text += `（${newIndex}）`
               for (let j = 0; j < el.options.length; j += 1) {
                 const currentOption = el.options[j]
                 table += `<td>${currentOption.option}．${currentOption.value}</td>`
@@ -350,6 +356,7 @@ export default {
         name: 'content',
         value: [...this.content.slice(0, index), ...currentContent, ...this.content.slice(endIndex)],
       })
+      this.loading = false
     },
     // 处理选项
     async handleOptionData(futureOption) {
@@ -382,6 +389,7 @@ export default {
       this.isFillup && this.adjustTable('del', optionIndex, queIndex)
     },
     async adjustTable(direction, optionIndex, questionIndex) {
+      this.loading = true
       const currentAdjustTr = this.option[questionIndex].options
       const prev = currentAdjustTr[optionIndex - 1]
       const current = currentAdjustTr[optionIndex]
@@ -439,10 +447,35 @@ export default {
       this.isFillup && this.adjustTable('up', optionIndex, queIndex)
     },
     // 添加选项
-    pushOption() {
+    async pushOption() {
       const options = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
       if (this.isFillup) {
+        this.loading = true
         // 完形填空
+        let table = '<table>'
+        let text = ''
+        const { option } = this
+        option.push({
+          answerNo: `（${option.length + 1}）`,
+          options: options.slice(0, this.optionLen).map((el) => ({
+            option: el,
+            value: '',
+          })),
+        })
+        await option.forEach((el, index) => {
+          table += `<tr>（${index}）`
+          text += `（${index}）`
+          for (let i = 0; i < el.options.length; i += 1) {
+            const currentOption = el.options[i]
+            table += `<td>${currentOption.option}．${currentOption.value}</td>`
+            text += `${currentOption.option}．${currentOption.value}`
+            if (i === el.options.length - 1) {
+              table += '</tr>'
+            }
+          }
+        })
+        table += '</table>'
+        this.updateTable(table, text)
       } else {
         // 普通选择题只需要在当前选项行push即可
         const { option } = this
@@ -475,6 +508,9 @@ export default {
     },
     handleChange(props, values) {
       console.log(values)
+      if (values.optionNum) {
+        this.optionLen = values.optionNum
+      }
     },
     handleEditorChange(event, name) {
       console.log(event, name)

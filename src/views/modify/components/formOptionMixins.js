@@ -120,7 +120,7 @@ export default {
             })
           })
         }
-        formOptions = [formOptions[0], { label: '每空选项数', type: 'input-number', decorator: ['optionNum', { initialValue: 4 }] }, ...list, ...formOptions.slice(1)]
+        formOptions = [formOptions[0], { label: '每空选项数', type: 'input-number', decorator: ['optionNum', { initialValue: this.optionLen }] }, ...list, ...formOptions.slice(1)]
       }
       if (this.expend) {
         formOptions = formOptions.concat([
