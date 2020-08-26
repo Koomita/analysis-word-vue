@@ -404,13 +404,9 @@ export default {
         text += el.answerNo
         for (let i = 0; i < len; i += 1) {
           const currentOption = index === questionIndex ? currentAdjustTr : el.options
-          if (currentOption.option) {
-            table += `<td>${currentOption[i].option}．${currentOption[i].value}</td>`
-            text += `${currentOption[i].option}．${currentOption[i].value}`
-          } else {
-            table += '<td></td>'
-          }
-          if (i === el.options.length - 1) {
+          table += `<td>${currentOption[i].option}．${currentOption[i].value}</td>`
+          text += `${currentOption[i].option}．${currentOption[i].value}`
+          if (i === len - 1) {
             table += '</tr>'
           }
         }
@@ -455,8 +451,24 @@ export default {
     },
     // 保存内容
     save() {
-      this.$refs.formField.form.validateFields((err, values) => {
+      this.$refs.formField.form.validateFields(async (err, values) => {
         if (!err) {
+          if (this.isFillup) {
+            // 处理完形填空选项
+            let table = '<table>'
+            await this.option.forEach((el) => {
+              table += `<tr>${el.answerNo}`
+              for (let j = 0; j < el.options.length; j += 1) {
+                const currentOption = el.options[j]
+                table += `<td>${currentOption.option}．${currentOption.value}</td>`
+                if (j === el.options.length - 1) {
+                  table += '</tr>'
+                }
+              }
+            })
+            table += '</table>'
+            values.options = table
+          }
           this.updateItems(values)
         }
       })
