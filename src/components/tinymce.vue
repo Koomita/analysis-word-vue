@@ -52,6 +52,12 @@ export default {
       },
       immediate: true,
     },
+    content(val) {
+      if (val && val !== this.value) {
+        // 编辑器内容发生变化时，告知外部，实现 v-model 双向监听效果
+        this.$emit('change', val)
+      }
+    },
   },
   created() {
     const that = this

@@ -43,6 +43,21 @@ export default new Vuex.Store({
       const index = state.itemIds.findIndex((el) => el === id)
       state.itemIds.splice(index, 1)
     },
+    // 更新选项
+    updateOptions(state, content) {
+      const currentQuestion = state.content.filter((el) => el.itemId === state.currentItemId)
+      const index = state.content.findIndex((el) => el.itemId === state.currentItemId)
+      const endIndex = currentQuestion.length + index
+      const { questionTypeId } = currentQuestion[0]
+      if (questionTypeId === 5) {
+        // 完形填空
+      } else {
+        // 普通选择
+        const former = state.content.slice(0, index)
+        const latter = state.content.slice(endIndex)
+        state.content = [...former, ...content, ...latter]
+      }
+    },
     // 保存题目
     updateItems(state, item) {
       if (item) {

@@ -33,6 +33,7 @@ export default {
               initialValue: '',
             },
           ],
+          placeholder: '请填写…（格式：ABCD）',
         },
         {
           label: '难度',
@@ -100,7 +101,7 @@ export default {
         // 选择题
         const { option } = this
         const list = []
-        if (this.questionTypeId === 5) {
+        if (this.isFillup) {
           option.forEach((el) => {
             el.options.forEach((item, index) => {
               list.push({
@@ -110,7 +111,7 @@ export default {
               })
             })
           })
-        } else {
+        } else if (this.questionTypeId !== 5) {
           option.forEach((el) => {
             list.push({
               label: `${el.option}`,
@@ -119,7 +120,7 @@ export default {
             })
           })
         }
-        formOptions = [formOptions[0], ...list, ...formOptions.slice(1)]
+        formOptions = [formOptions[0], { label: '每空选项数', type: 'input-number', decorator: ['optionNum', { initialValue: 4 }] }, ...list, ...formOptions.slice(1)]
       }
       if (this.expend) {
         formOptions = formOptions.concat([

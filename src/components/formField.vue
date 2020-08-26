@@ -18,6 +18,10 @@
         :placeholder="formItem.placeholder || `请输入 ${formItem.label}`"
         :style="formItem.style || {}"
       />
+      <a-input-number
+        v-if="formItem.type === 'input-number'"
+        v-decorator="formItem.decorator"
+      ></a-input-number>
       <a-select
         v-if="formItem.type === 'select'"
         v-decorator="formItem.decorator"

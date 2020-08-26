@@ -1,5 +1,5 @@
 <template>
-  <editor :value="value" :height="editorHeight" @del="del" />
+  <editor :value="value" :height="editorHeight" @del="del" @change="change" />
 </template>
 <script>
 import { mapState, mapMutations } from 'vuex'
@@ -94,6 +94,9 @@ export default {
         })
       }
       this.value = detail
+    },
+    change(val) {
+      this.value = val
     },
   },
 }
