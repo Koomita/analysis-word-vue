@@ -3,8 +3,8 @@
     <main-frame>
       <div slot="content" class="modify-content">
         <a-skeleton :loading="loading" active>
-          <h1>{{ step ? '' : '源文件内容' }}</h1>
-          <component :is="currentComponent" :value="detail" />
+          <h1>源文件内容</h1>
+          <paper />
         </a-skeleton>
       </div>
       <div slot="action" class="modify-action">
@@ -18,14 +18,12 @@ import frame from '@/components/frame.vue'
 import { mapMutations, mapState } from 'vuex'
 import paper from './components/paper.vue'
 import actions from './components/actions.vue'
-import questionDetail from './components/questionDetail.vue'
 
 export default {
   components: {
     'main-frame': frame,
     paper,
     actions,
-    questionDetail,
   },
   data() {
     return {
@@ -38,16 +36,8 @@ export default {
   },
   computed: {
     ...mapState(['step', 'fileInfo', 'subjectId']),
-    currentComponent() {
-      const components = ['paper', 'questionDetail']
-      return components[this.step]
-    },
   },
   created() {
-    const { teacherId } = this.$route.query
-    if (teacherId) {
-      this.updateState({ name: 'teacherId', value: teacherId })
-    }
     this.updateState({ name: 'step', value: 0 })
     this.getContent()
   },

@@ -33,6 +33,10 @@ export default {
     }
   },
   mounted() {
+    const { teacherId } = this.$route.query
+    if (teacherId) {
+      this.updateState({ name: 'teacherId', value: teacherId })
+    }
     this.updateState({ name: 'step', value: -1 })
   },
   methods: {

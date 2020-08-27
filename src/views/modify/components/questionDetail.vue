@@ -114,6 +114,7 @@ import FormField from '@/components/formField.vue'
 import editor from '@/components/tinymce.vue'
 import formOptionMixins from './formOptionMixins'
 import completeModal from './completeModal.vue'
+import { formatTableString, formatTableOptions, adjustOrder } from '../utils/utils'
 
 export default {
   mixins: [formOptionMixins],
@@ -136,7 +137,6 @@ export default {
       gradeId: '',
       cateId: '',
       loading: false,
-      delOptionIndex: [], // 删除选项的index，完形填空用
       adjustOptionIndex: [], // 调整的选项索引，完形填空用
       fileList: [], // 上传视频
       optionLen: 4, // 选项数
@@ -161,11 +161,16 @@ export default {
       // 找出当前题目的内容
       return this.content.filter((el) => el.itemId === this.currentItemId)
     },
+    // 是否为完形填空
+    isFillup() {
+      if (!this.currentQuestion || !this.currentQuestion.length) return false
+      return this.currentQuestion[this.currentQuestion.length - 1].content.indexOf('<table') > -1
+    },
     // 题目
     question() {
       if (!this.currentQuestion || !this.currentQuestion.length || this.loading) return ''
       // 完形填空题目，选项在最后一条，内容为表格
-      if (this.questionTypeId === 5) {
+      if (this.isFillup) {
         return this.currentQuestion.filter((el, i) => i < this.currentQuestion.length - 1).map((el) => el.content).join('')
       }
       // 把有选项的content从题干中筛除再map
@@ -178,45 +183,14 @@ export default {
       }
       return 0
     },
-    // 是否为完形填空
-    isFillup() {
-      if (!this.currentQuestion || !this.currentQuestion.length) return false
-      return this.currentQuestion[this.currentQuestion.length - 1].content.indexOf('<table') > -1
-    },
     // 选项
     option() {
       if (!this.questionTypeId) return []
-      const answers = this.currentQuestion[this.currentQuestion.length - 1]
       if (this.isFillup) {
         // 完形填空选项
-        let { text } = answers
-        const options = []
-        // 匹配题号
-        do {
-          const value = /（\d+）[^（）]+/.exec(text)[0]
-          options.push(value)
-          text = text.replace(value, '')
-        } while (text)
-        const option = options.filter((el, index) => !this.delOptionIndex.includes(index)).map((el) => {
-          let temp = el
-          const answerNo = /（\d+）/.exec(temp)[0]
-          temp = temp.replace(answerNo, '')
-          const opts = []
-          do {
-            const currentOpt = /[A-Z]．+[^A-Z]+/.exec(temp)
-            const value = /[^A-Z^．]+/.exec(currentOpt)[0]
-            const opt = /[A-Z]/.exec(temp)[0]
-            opts.push({
-              option: opt,
-              value,
-            })
-            temp = temp.replace(`${opt}．${value}`, '')
-          } while (temp)
-          return {
-            answerNo,
-            options: opts,
-          }
-        })
+        const answers = this.currentQuestion[this.currentQuestion.length - 1]
+        const { text } = answers
+        const option = formatTableOptions(text)
         return option
       }
       return this.currentQuestion.filter((el) => el.options && el.options.length).map((el) => el.options || []).flat()
@@ -226,7 +200,6 @@ export default {
     currentItemId: {
       handler() {
         this.loading = true
-        this.delOptionIndex = []
         setTimeout(() => {
           this.loading = false
         }, 100)
@@ -319,24 +292,9 @@ export default {
         onOk: async () => {
           this.loading = true
           // 删除完形填空小题
-          let table = '<table>'
-          let text = ''
-          await this.option.forEach((el, i) => {
-            if (i !== index) {
-              const newIndex = i < index ? i : i - 1
-              table += `<tr>（${newIndex}）`
-              text += `（${newIndex}）`
-              for (let j = 0; j < el.options.length; j += 1) {
-                const currentOption = el.options[j]
-                table += `<td>${currentOption.option}．${currentOption.value}</td>`
-                text += `${currentOption.option}．${currentOption.value}`
-                if (j === el.options.length - 1) {
-                  table += '</tr>'
-                }
-              }
-            }
-          })
-          table += '</table>'
+          const option = JSON.parse(JSON.stringify(this.option))
+          option.splice(index, 1)
+          const { table, text } = formatTableString(option)
           this.updateTable(table, text)
         },
       })
@@ -390,52 +348,16 @@ export default {
     },
     async adjustTable(direction, optionIndex, questionIndex) {
       this.loading = true
-      const currentAdjustTr = this.option[questionIndex].options
-      const prev = currentAdjustTr[optionIndex - 1]
-      const current = currentAdjustTr[optionIndex]
-      const next = currentAdjustTr[optionIndex + 1]
-      if (direction === 'up') {
-        currentAdjustTr.splice(optionIndex, 1, { option: current.option, value: prev.value })
-        currentAdjustTr.splice(optionIndex - 1, 1, { option: prev.option, value: current.value })
-      } else if (direction === 'down') {
-        currentAdjustTr.splice(optionIndex, 1, { option: current.option, value: next.value })
-        currentAdjustTr.splice(optionIndex + 1, 1, { option: next.option, value: current.value })
-      } else {
-        currentAdjustTr.splice(optionIndex, 1)
-      }
-      // 当前行数即option长度
-      let table = '<table>'
-      let text = ''
-      await this.option.forEach((el, index) => {
-        const len = index === questionIndex ? currentAdjustTr.length : el.options.length
-        table += `<tr>${el.answerNo}`
-        text += el.answerNo
-        for (let i = 0; i < len; i += 1) {
-          const currentOption = index === questionIndex ? currentAdjustTr : el.options
-          table += `<td>${currentOption[i].option}．${currentOption[i].value}</td>`
-          text += `${currentOption[i].option}．${currentOption[i].value}`
-          if (i === len - 1) {
-            table += '</tr>'
-          }
-        }
-      })
-      table += '</table>'
+      const options = JSON.parse(JSON.stringify(this.option[questionIndex].options))
+      const currentAdjustTr = adjustOrder(direction, options, optionIndex)
+      const option = JSON.parse(JSON.stringify(this.option))
+      option.splice(questionIndex, 1, { ...option[questionIndex], options: currentAdjustTr })
+      const { table, text } = formatTableString(option)
       this.updateTable(table, text)
     },
     move(direction, optionIndex) {
-      const prev = this.option[optionIndex - 1]
-      const current = this.option[optionIndex]
-      const next = this.option[optionIndex + 1]
-      const options = JSON.parse(JSON.stringify(this.option))
-      if (direction === 'up') {
-        options.splice(optionIndex, 1, { option: current.option, value: prev.value })
-        options.splice(optionIndex - 1, 1, { option: prev.option, value: current.value })
-      } else if (direction === 'down') {
-        options.splice(optionIndex, 1, { option: current.option, value: next.value })
-        options.splice(optionIndex + 1, 1, { option: next.option, value: current.value })
-      } else {
-        options.splice(optionIndex, 1)
-      }
+      const option = JSON.parse(JSON.stringify(this.option))
+      const options = adjustOrder(direction, option, optionIndex)
       this.handleOptionData(options)
     },
     moveDown(optionIndex, queIndex) {
@@ -452,8 +374,6 @@ export default {
       if (this.isFillup) {
         this.loading = true
         // 完形填空
-        let table = '<table>'
-        let text = ''
         const { option } = this
         option.push({
           answerNo: `（${option.length + 1}）`,
@@ -462,19 +382,7 @@ export default {
             value: '',
           })),
         })
-        await option.forEach((el, index) => {
-          table += `<tr>（${index}）`
-          text += `（${index}）`
-          for (let i = 0; i < el.options.length; i += 1) {
-            const currentOption = el.options[i]
-            table += `<td>${currentOption.option}．${currentOption.value}</td>`
-            text += `${currentOption.option}．${currentOption.value}`
-            if (i === el.options.length - 1) {
-              table += '</tr>'
-            }
-          }
-        })
-        table += '</table>'
+        const { table, text } = formatTableString(option)
         this.updateTable(table, text)
       } else {
         // 普通选择题只需要在当前选项行push即可
@@ -488,18 +396,7 @@ export default {
         if (!err) {
           if (this.isFillup) {
             // 处理完形填空选项
-            let table = '<table>'
-            await this.option.forEach((el) => {
-              table += `<tr>${el.answerNo}`
-              for (let j = 0; j < el.options.length; j += 1) {
-                const currentOption = el.options[j]
-                table += `<td>${currentOption.option}．${currentOption.value}</td>`
-                if (j === el.options.length - 1) {
-                  table += '</tr>'
-                }
-              }
-            })
-            table += '</table>'
+            const { table } = formatTableString(this.option)
             values.options = table
           }
           this.updateItems(values)

@@ -42,7 +42,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['questionClasses', 'sources']),
+    ...mapState(['questionClasses', 'sources', 'teacherId']),
     show: {
       get() {
         return this.visible
@@ -160,8 +160,9 @@ export default {
       return document.querySelector('.home')
     },
     async getSubjects() {
+      const { teacherId } = this
       const res = await this.$post('/api/paperupload/list/subject.do', {
-        teacherId: 1,
+        teacherId,
       })
       this.subjects = res.dataInfo.data || []
     },
