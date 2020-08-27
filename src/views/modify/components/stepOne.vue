@@ -32,11 +32,11 @@
      @cancel="cancel">
       <a-form :form="form" layout="inline">
         <a-form-item label="题型">
-          <a-select v-decorator="['questionTypeId', { initialValue: questionTypeId }]" style="min-width: 200px;">
+          <a-select v-decorator="['id', { initialValue: id }]" style="min-width: 200px;">
             <a-select-option
-              v-for="opt in questionTypes"
-              :key="opt.questionTypeId"
-              :value="opt.questionTypeId"
+              v-for="(opt, oIndex) in questionTypes"
+              :key="`${oIndex}-${opt.id}`"
+              :value="opt.id"
             >
               {{ opt.name }}
             </a-select-option>
@@ -56,7 +56,7 @@ export default {
   data() {
     return {
       showEditModal: false, // 显示编辑弹窗
-      questionTypeId: '', // 当前题型id
+      id: '', // 当前题型id
       count: '', // 当前题型数量
       form: this.$form.createForm(this),
     }
@@ -83,7 +83,7 @@ export default {
     this.getQuestionTypes()
   },
   methods: {
-    ...mapMutations(['updateState', 'delQuestionType']),
+    ...mapMutations(['updateState', 'delQuestionType', 'updateSubjects']),
     ...mapActions(['getQuestionTypes']),
     next() {
       // 下一步，默认编辑第一题题目详情
@@ -92,8 +92,8 @@ export default {
       this.$router.push('/modify/detail')
     },
     edit(record) {
-      const { questionTypeId, count } = record
-      this.questionTypeId = questionTypeId
+      const { id, count } = record
+      this.id = id
       this.count = count
       this.showEditModal = true
     },
@@ -121,6 +121,14 @@ export default {
     },
     save() {
       // 更新题型数量
+      this.form.validateFields((err, values) => {
+        if (!err) {
+          const { subjects } = this
+          const index = subjects.findIndex((el) => el.id === values.id)
+          this.updateSubjects({ item: { ...subjects[index], values }, index })
+          this.showEditModal = false
+        }
+      })
     },
     cancel() {
       this.form.resetFields()

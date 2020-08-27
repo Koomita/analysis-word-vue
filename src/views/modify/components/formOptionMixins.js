@@ -111,6 +111,7 @@ export default {
               })
             })
           })
+          list.unshift({ label: '每空选项数', type: 'input-number', decorator: ['optionNum', { initialValue: this.optionLen }] })
         } else if (this.questionTypeId !== 5) {
           option.forEach((el) => {
             list.push({
@@ -120,7 +121,7 @@ export default {
             })
           })
         }
-        formOptions = [formOptions[0], { label: '每空选项数', type: 'input-number', decorator: ['optionNum', { initialValue: this.optionLen }] }, ...list, ...formOptions.slice(1)]
+        formOptions = [formOptions[0], ...list, ...formOptions.slice(1)]
       }
       if (this.expend) {
         formOptions = formOptions.concat([

@@ -4,8 +4,9 @@
       <div slot="content" class="modify-content">
         <a-skeleton :loading="loading" active>
           <h1>源文件内容</h1>
-          <paper />
+          <editor :value="value" :height="editorHeight" @del="del" @change="change" @saveblock="saveblock" />
         </a-skeleton>
+        <question-modal :visible="showModal" @cancel="showModal = false" @submit="addQuestion" />
       </div>
       <div slot="action" class="modify-action">
         <actions v-if="!loading" />
@@ -14,35 +15,65 @@
   </div>
 </template>
 <script>
-import frame from '@/components/frame.vue'
+import { v4 } from 'uuid'
 import { mapMutations, mapState } from 'vuex'
-import paper from './components/paper.vue'
+import frame from '@/components/frame.vue'
+import editor from '@/components/tinymce.vue'
 import actions from './components/actions.vue'
+import questionModal from './components/questionModal.vue'
 
 export default {
   components: {
     'main-frame': frame,
-    paper,
+    editor,
     actions,
+    questionModal,
   },
   data() {
     return {
       style: '',
-      content: '',
       loading: false,
-      detail: '<p>解析中……</p>',
-      subjects: [],
+      value: '',
+      init: false,
+      editorHeight: document.body.offsetHeight - 150,
+      items: [], // 保存的新题块
+      showModal: false,
     }
   },
   computed: {
-    ...mapState(['step', 'fileInfo', 'subjectId']),
+    ...mapState(['step', 'fileInfo', 'subjectId', 'content', 'itemIds']),
+    itemContents() {
+      return this.content
+        .filter((el) => Boolean(el.itemId))
+        .map((el) => el.itemId)
+    },
+  },
+  watch: {
+    content: {
+      handler() {
+        if (!this.init) {
+          this.setValue()
+        }
+      },
+      immediate: true,
+      deep: true,
+    },
+    itemIds: {
+      handler() {
+        if (this.init) {
+          this.updateValue()
+        }
+      },
+      deep: true,
+    },
   },
   created() {
+    this.init = false
     this.updateState({ name: 'step', value: 0 })
     this.getContent()
   },
   methods: {
-    ...mapMutations(['updateState']),
+    ...mapMutations(['updateState', 'delItem', 'updateSubjects']),
     async getContent() {
       this.loading = true
       const { fileInfo, subjectId } = this
@@ -71,6 +102,89 @@ export default {
       } else {
         styleTag.appendChild(document.createTextNode(style))
       }
+    },
+    del(itemId, id) {
+      // 删除题块
+      this.delItem({ itemId, id })
+    },
+    formatContent() {
+      const itemIds = []
+      let detail = ''
+      if (this.content.length) {
+        this.content.forEach((el) => {
+          const { content, itemId, id } = el
+          const arr = this.init ? this.itemIds : this.itemContents
+          const paraIndex = arr.findIndex((item) => item === itemId)
+          if (paraIndex > -1) {
+            if (!itemIds.includes(itemId)) {
+              itemIds.push(itemId)
+              detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}">&nbsp;</span>${content}</p>`
+            } else {
+              detail += `<p class="question-block data-itemid="${itemId}" data-id="${id}">${content}</p>`
+            }
+          } else {
+            detail += `<p data-itemid="${itemId}" data-id="${id}">${content}</p>`
+          }
+        })
+      }
+      return { detail, itemIds }
+    },
+    setValue() {
+      // 初始化数据
+      const { detail, itemIds } = this.formatContent()
+      this.updateState({ name: 'itemIds', value: itemIds })
+      this.value = detail
+      this.init = true
+    },
+    updateValue() {
+      // 更新数据
+      const { detail } = this.formatContent()
+      this.value = detail
+    },
+    change(val) {
+      this.value = val
+    },
+    saveblock(content) {
+      // 保存题块
+      const contents = []
+      let text
+      do {
+        text = /<p.+data-itemid.+<\/p>/.exec(content) ? /<p.+data-itemid.+<\/p>/.exec(content)[0] : ''
+        const pureContent = text.replace(/(<\/?p.*?>)/gi, '')
+        pureContent && contents.push(pureContent)
+        content = content.replace(text, '')
+      } while (content && text)
+      this.items = contents
+      // 显示弹窗选择题型
+      this.showModal = true
+    },
+    addQuestion({ id, count }) {
+      // 更新题块
+      const index = this.content.findIndex((el) => el.content === this.items[0])
+      console.log(index, this.items[0])
+      // 生成新的itemId
+      const itemId = v4()
+      const newItems = this.items.map((el, i) => ({
+        ...this.content[index + i],
+        content: el,
+        itemId,
+        id,
+      }))
+      return console.log(newItems)
+      this.updateState({
+        name: 'content',
+        value: [...this.content.slice(0, index), ...newItems, ...this.content.slice(index + newItems.length)],
+      })
+      // 更新itemId
+      this.updateState({
+        name: 'itemIds',
+        value: this.itemIds.concat(itemId),
+      })
+      const { subjects } = this
+      const subjectIndex = subjects.findIndex((el) => el.id === id)
+      // 更新题量
+      this.updateSubjects({ item: { ...subjects[subjectIndex], count: subjects[subjectIndex].count + 1 }, index: subjectIndex > -1 ? subjectIndex : subjects.length })
+      this.showModal = false
     },
   },
 }

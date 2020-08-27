@@ -16,7 +16,7 @@
         <p class="flex-item">
           <span
            v-for="(num, numIndex) in que.number"
-           :key="`${que.questionTypeId}-${num}`"
+           :key="`${que.id}-${num}`"
            :class="['block', !que.answer[numIndex] ? 'error': '', checkActive(que, numIndex) ? 'active' : '']"
            @click="changeCurrentQuestion(que.itemId[numIndex])"
           >
@@ -49,16 +49,17 @@ export default {
         this.itemIds.forEach((el, i) => {
           const target = this.questions.filter((item) => item.itemId === el)
           if (target.length) {
-            const { questionTypeId, anser } = target[0]
-            const index = list.findIndex((item) => item.questionTypeId === questionTypeId)
+            const { id, anser } = target[0]
+            const index = list.findIndex((item) => item.id === id)
+            console.log(id)
             if (index < 0) {
               list.push({
                 itemId: [el],
                 number: [`${i + 1}`],
                 questions: [target],
                 answer: [anser],
-                questionTypeId,
-                questionTypeName: this.questionTypes.find((obj) => obj.questionTypeId === questionTypeId)?.name,
+                id,
+                questionTypeName: this.questionTypes.find((obj) => obj.id === id)?.name,
               })
             } else {
               list[index].number.push(`${i + 1}`)

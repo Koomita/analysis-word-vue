@@ -35,6 +35,7 @@ export default {
     padding: 10px 24px;
     box-sizing: border-box;
     background: #fff;
+    overflow: scroll;
     .step-flow {
       .action-title {
         h1 {

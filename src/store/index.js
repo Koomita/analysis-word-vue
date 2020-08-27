@@ -39,24 +39,27 @@ export default new Vuex.Store({
       state[name] = value
     },
     // 删除题块
-    delItem(state, id) {
-      const index = state.itemIds.findIndex((el) => el === id)
+    delItem(state, { itemId, id }) {
+      console.log(itemId, state.itemIds.findIndex((el) => el === itemId))
+      const index = state.itemIds.findIndex((el) => el === itemId)
       state.itemIds.splice(index, 1)
+      // 同时subjects对应题量-1
+      const i = state.subjects.findIndex((el) => `${el.id}` === `${id}`)
+      const subject = state.subjects[i]
+      state.subjects.splice(i, 1, { ...subject, count: subject.count - 1 })
     },
-    // 更新选项
+    // 更新普通选择题的选项
     updateOptions(state, content) {
       const currentQuestion = state.content.filter((el) => el.itemId === state.currentItemId)
       const index = state.content.findIndex((el) => el.itemId === state.currentItemId)
       const endIndex = currentQuestion.length + index
-      const { questionTypeId } = currentQuestion[0]
-      if (questionTypeId === 5) {
-        // 完形填空
-      } else {
-        // 普通选择
-        const former = state.content.slice(0, index)
-        const latter = state.content.slice(endIndex)
-        state.content = [...former, ...content, ...latter]
-      }
+      const former = state.content.slice(0, index)
+      const latter = state.content.slice(endIndex)
+      state.content = [...former, ...content, ...latter]
+    },
+    // 更新题量题型
+    updateSubjects(state, { item, index }) {
+      state.subjects.splice(index, 1, item)
     },
     // 保存题目
     updateItems(state, item) {

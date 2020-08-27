@@ -17,6 +17,8 @@ import 'tinymce/plugins/paste'
 import 'tinymce/plugins/preview'
 import 'tinymce/plugins/fullscreen'
 import 'tinymce/plugins/image'
+import 'tinymce/plugins/charmap'
+import 'tinymce/plugins/quickbars'
 
 export default {
   components: {
@@ -66,8 +68,6 @@ export default {
       skin_url: '/tinymce/skins/ui/oxide',
       content_css: that.inline ? '' : '/tinymce/content.css',
       language_url: '/tinymce/zh_CN.js',
-      // fixed_toolbar_container: `#${that.id}-toolbar`,
-      // toolbar_mode: 'scroll',
       language: 'zh_CN',
       height: that.height,
       browser_spellcheck: true, // 拼写检查
@@ -76,9 +76,9 @@ export default {
       statusbar: false, // 隐藏编辑器底部的状态栏
       paste_data_images: true, // 允许粘贴图像
       menubar: false, // 隐藏最上方menu
-      plugins: 'image advlist table lists paste preview fullscreen',
-      toolbar: 'bold italic underline strikethrough subscript superscript | alignleft aligncenter alignright alignjustify | blockquote image table numlist bullist preview fullscreen',
-      // automatic_uploads: false,
+      plugins: 'quickbars image charmap advlist table lists paste preview fullscreen',
+      quickbars_selection_toolbar: that.inline ? '' : 'saveblock', // 仅在第一步显示保存题块
+      toolbar: 'bold italic underline strikethrough subscript superscript charmap | alignleft aligncenter alignright alignjustify | blockquote image table numlist bullist preview fullscreen',
       images_upload_handler: async (blobInfo, success, failure, progress) => {
         try {
           const res = await that.$post('/api/upload/upload/many/base64.do', [{ type: `.${blobInfo.blob().type.split('/')[1]}`, data: blobInfo.base64() }], {
@@ -95,6 +95,27 @@ export default {
           console.log(err)
         }
       },
+      setup: (editor) => {
+        if (!that.inline) {
+          // 注册一个工具栏按钮名称
+          editor.ui.registry.addButton('saveblock', {
+            text: '保存题块',
+            onAction() {
+              that.$emit('saveblock', editor.selection.getContent())
+            },
+          })
+
+          return {
+            getMetadata() {
+              return {
+              // 插件名和链接会显示在“帮助”→“插件”→“已安装的插件”中
+                name: 'Example plugin', // 插件名称
+                url: 'http://exampleplugindocsurl.com', // 作者网址
+              }
+            },
+          }
+        }
+      },
     }
   },
   methods: {
@@ -102,9 +123,8 @@ export default {
       const { srcElement } = e
       if (this.id === 'tinymce' && srcElement.className === 'del-icon') {
         // 删除该题块
-        const { itemid } = srcElement.dataset
-        console.log(itemid)
-        this.$emit('del', itemid)
+        const { itemid, id } = srcElement.dataset
+        this.$emit('del', itemid, id)
       }
     },
   },
