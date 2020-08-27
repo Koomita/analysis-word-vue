@@ -125,7 +125,7 @@ export default {
         if (!err) {
           const { subjects } = this
           const index = subjects.findIndex((el) => el.id === values.id)
-          this.updateSubjects({ item: { ...subjects[index], values }, index })
+          this.updateSubjects({ item: { ...subjects[index], ...values }, index })
           this.showEditModal = false
         }
       })
