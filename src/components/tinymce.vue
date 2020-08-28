@@ -101,7 +101,7 @@ export default {
           editor.ui.registry.addButton('saveblock', {
             text: '保存题块',
             onAction() {
-              that.$emit('saveblock', editor.selection.getContent())
+              that.$emit('saveblock', editor.selection.getContent(), editor.selection.getNode())
             },
           })
 

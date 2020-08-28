@@ -41,7 +41,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['step', 'fileInfo', 'subjectId', 'content', 'itemIds']),
+    ...mapState(['step', 'fileInfo', 'subjectId', 'content', 'itemIds', 'subjects', 'questionTypes']),
     itemContents() {
       return this.content
         .filter((el) => Boolean(el.itemId))
@@ -112,18 +112,20 @@ export default {
       let detail = ''
       if (this.content.length) {
         this.content.forEach((el) => {
-          const { content, itemId, id } = el
+          const {
+            content, itemId, id, contentId,
+          } = el
           const arr = this.init ? this.itemIds : this.itemContents
           const paraIndex = arr.findIndex((item) => item === itemId)
           if (paraIndex > -1) {
             if (!itemIds.includes(itemId)) {
               itemIds.push(itemId)
-              detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}">&nbsp;</span>${content}</p>`
+              detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}">&nbsp;</span>${content}</p>`
             } else {
-              detail += `<p class="question-block data-itemid="${itemId}" data-id="${id}">${content}</p>`
+              detail += `<p class="question-block data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
             }
           } else {
-            detail += `<p data-itemid="${itemId}" data-id="${id}">${content}</p>`
+            detail += `<p data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
           }
         })
       }
@@ -146,31 +148,28 @@ export default {
     },
     saveblock(content) {
       // 保存题块
-      const contents = []
-      let text
-      do {
-        text = /<p.+data-itemid.+<\/p>/.exec(content) ? /<p.+data-itemid.+<\/p>/.exec(content)[0] : ''
-        const pureContent = text.replace(/(<\/?p.*?>)/gi, '')
-        pureContent && contents.push(pureContent)
-        content = content.replace(text, '')
-      } while (content && text)
+      const parser = new DOMParser()
+      const currentDom = parser.parseFromString(content, 'text/html')
+      const currentContent = Array.from(currentDom.getElementsByTagName('p'))
+      const contents = currentContent.map((el) => ({
+        content: el.innerHTML,
+        contentId: el.dataset.contentid,
+      }))
       this.items = contents
       // 显示弹窗选择题型
       this.showModal = true
     },
     addQuestion({ id, count }) {
       // 更新题块
-      const index = this.content.findIndex((el) => el.content === this.items[0])
-      console.log(index, this.items[0])
+      const index = this.content.findIndex((el) => el.contentId === this.items[0].contentId)
       // 生成新的itemId
       const itemId = v4()
       const newItems = this.items.map((el, i) => ({
         ...this.content[index + i],
-        content: el,
+        ...el,
         itemId,
         id,
       }))
-      return console.log(newItems)
       this.updateState({
         name: 'content',
         value: [...this.content.slice(0, index), ...newItems, ...this.content.slice(index + newItems.length)],
@@ -182,8 +181,18 @@ export default {
       })
       const { subjects } = this
       const subjectIndex = subjects.findIndex((el) => el.id === id)
-      // 更新题量
-      this.updateSubjects({ item: { ...subjects[subjectIndex], count: subjects[subjectIndex].count + 1 }, index: subjectIndex > -1 ? subjectIndex : subjects.length })
+      if (subjectIndex > -1) {
+        // 更新现有题量
+        this.updateSubjects({ item: { ...subjects[subjectIndex], count: subjects[subjectIndex].count + count }, index: subjectIndex > -1 ? subjectIndex : subjects.length })
+      } else {
+        const item = this.questionTypes.find((el) => el.id === id)
+        this.updateSubjects({
+          item: {
+            subjectTitle: item.name, count, id, questionTypeId: item.questionTypeId,
+          },
+          index: subjects.length,
+        })
+      }
       this.showModal = false
     },
   },

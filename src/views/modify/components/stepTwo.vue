@@ -38,14 +38,14 @@ export default {
     return {}
   },
   computed: {
-    ...mapState(['questionTypes', 'itemIds', 'content', 'currentItemId', 'items', 'subjectId', 'teacherId']),
+    ...mapState(['questionTypes', 'itemIds', 'content', 'currentItemId', 'items', 'subjectId', 'teacherId', 'subjects']),
     questions() {
       if (!this.content || !this.content.length || !this.itemIds || !this.itemIds.length) return []
       return this.content.filter((el) => this.itemIds.includes(el.itemId))
     },
     currentQuestions() {
       const list = []
-      if (this.questionTypes.length && this.itemIds.length && this.content.length) {
+      if (this.subjects.length && this.itemIds.length && this.content.length) {
         this.itemIds.forEach((el, i) => {
           const target = this.questions.filter((item) => item.itemId === el)
           if (target.length) {
@@ -59,7 +59,7 @@ export default {
                 questions: [target],
                 answer: [anser],
                 id,
-                questionTypeName: this.questionTypes.find((obj) => obj.id === id)?.name,
+                questionTypeName: this.subjects.find((obj) => obj.id === id)?.subjectTitle,
               })
             } else {
               list[index].number.push(`${i + 1}`)
