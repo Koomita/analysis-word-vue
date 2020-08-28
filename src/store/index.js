@@ -46,7 +46,13 @@ export default new Vuex.Store({
       // 同时subjects对应题量-1
       const i = state.subjects.findIndex((el) => `${el.id}` === `${id}`)
       const subject = state.subjects[i]
-      state.subjects.splice(i, 1, { ...subject, count: subject.count - 1 })
+      const count = subject.count - 1
+      if (count > 0) {
+        state.subjects.splice(i, 1, { ...subject, count })
+      } else {
+        // === 0的时候删除全部题型
+        state.subjects.splice(i, 1)
+      }
     },
     // 更新普通选择题的选项
     updateOptions(state, content) {
