@@ -36,16 +36,16 @@ export const formatTableOptions = (text) => {
     const answerNo = /（\d+）/.exec(temp)[0]
     temp = temp.replace(answerNo, '')
     const opts = []
+    const reg = new RegExp(/[A-Z]．(\S+)/)
     do {
-      const currentOpt = /[A-Z]．+[^A-Z]+/.exec(temp)
-      const value = /[^A-Z^．]+/.exec(currentOpt)[0]
-      const opt = /[A-Z]/.exec(temp)[0]
+      const value = temp.match(reg)[1]
+      const opt = temp.match(reg)[0].replace(`．${value}`, '')
       opts.push({
         option: opt,
         value,
       })
-      temp = temp.replace(`${opt}．${value}`, '')
-    } while (temp)
+      temp = temp.trim().replace(`${opt}．${value}`, '')
+    } while (temp.match(reg))
     return {
       answerNo,
       options: opts,

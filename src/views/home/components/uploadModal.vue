@@ -65,7 +65,7 @@ export default {
           initialValue: this.fileList,
         }],
         customRequest: this.customRequest,
-        accept: '.doc',
+        accept: '.doc,.docx,.pdf,.png',
       }, {
         label: '学科',
         type: 'select',
