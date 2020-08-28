@@ -19,6 +19,7 @@ import {
   Spin,
   Skeleton,
   InputNumber,
+  TreeSelect,
 } from 'ant-design-vue'
 
 export default {
@@ -42,6 +43,7 @@ export default {
     Vue.use(Spin)
     Vue.use(Skeleton)
     Vue.use(InputNumber)
+    Vue.use(TreeSelect)
 
     Vue.prototype.$confirm = Modal.confirm
     Vue.prototype.$warning = Modal.warning

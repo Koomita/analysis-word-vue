@@ -51,6 +51,17 @@
           {{ opt[formItem.props && formItem.props.label || 'label'] }}
         </a-radio-button>
       </a-radio-group>
+      <a-tree-select
+        v-if="formItem.type === 'tree-select'"
+        v-decorator="formItem.decorator"
+        :multiple="formItem.mode === 'multiple'"
+        :placeholder="formItem.placeholder || `请选择 ${formItem.label}`"
+        :replace-fields="formItem.replaceFields || {children:'children', title:'title', key:'key', value: 'value'}"
+        :filter-tree-node="filterTreeNode"
+        :tree-data="formItem.options"
+        allow-clear
+        show-search
+      ></a-tree-select>
       <a-upload
         v-if="formItem.type === 'upload'"
         v-decorator="formItem.decorator"
@@ -103,6 +114,10 @@ export default {
     },
     filterOption(input, option) {
       return option.component.children[0].text.indexOf(input) > -1
+    },
+    filterTreeNode(input, treeNode) {
+      // console.log(input, treeNode)
+      return treeNode.componentOptions.propsData.title.indexOf(input) > -1
     },
   },
 }

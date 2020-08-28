@@ -66,12 +66,13 @@ export default {
         },
         {
           label: '知识点',
-          type: 'select',
+          type: 'tree-select',
           options: this.points,
           mode: 'multiple',
-          props: {
+          replaceFields: {
             label: 'pointName',
             value: 'id',
+            children: 'children',
           },
           decorator: [
             'pointIds',
@@ -152,46 +153,50 @@ export default {
           },
           {
             label: '必备知识',
-            type: 'select',
+            type: 'tree-select',
             mode: 'multiple',
             options: this.dimensionPoints,
             decorator: ['dimensionPointIds'],
-            props: {
+            replaceFields: {
               label: 'text',
               value: 'id',
+              children: 'children',
             },
           },
           {
             label: '关键能力',
-            type: 'select',
+            type: 'tree-select',
             mode: 'multiple',
             options: this.dimensionCapabilities,
             decorator: ['dimensionCapabilityIds'],
-            props: {
+            replaceFields: {
               label: 'text',
               value: 'id',
+              children: 'children',
             },
           },
           {
             label: '学科素养',
-            type: 'select',
+            type: 'tree-select',
             mode: 'multiple',
             options: this.dimensionAttainments,
             decorator: ['dimensionAttainmentIds'],
-            props: {
+            replaceFields: {
               label: 'text',
               value: 'id',
+              children: 'children',
             },
           },
           {
             label: '核心价值',
-            type: 'select',
+            type: 'tree-select',
             mode: 'multiple',
             options: this.dimensionCoreValues,
             decorator: ['dimensionCoreValueIds'],
-            props: {
+            replaceFields: {
               label: 'text',
               value: 'id',
+              children: 'children',
             },
           },
           {
