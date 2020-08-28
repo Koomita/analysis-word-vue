@@ -183,6 +183,10 @@ export default {
       }
       return 0
     },
+    // 选项是否分开，非一行n个选项
+    optionSplit() {
+      return this.currentQuestion.filter((el) => el.options && el.options.length).length > 1
+    },
     // 选项
     option() {
       if (!this.questionTypeId) return []
@@ -387,7 +391,11 @@ export default {
       } else {
         // 普通选择题只需要在当前选项行push即可
         const { option } = this
-        this.handleOptionData([...option, { option: options[option.length], value: '' }])
+        if (this.optionSplit) {
+          // 选项分开的需要增加一行新content
+        } else {
+          this.handleOptionData([...option, { option: options[option.length], value: '' }])
+        }
       }
     },
     // 保存内容
