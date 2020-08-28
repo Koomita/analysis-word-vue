@@ -83,7 +83,7 @@ export default {
   methods: {
     setScore() {
       this.showModal = true
-      console.log(this.paperInfo)
+      // console.log(this.paperInfo)
     },
     getContainer() {
       return document.querySelector('#app')

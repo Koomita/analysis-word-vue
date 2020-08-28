@@ -50,16 +50,17 @@ export default {
           const target = this.questions.filter((item) => item.itemId === el)
           if (target.length) {
             const { id, anser } = target[0]
-            const index = list.findIndex((item) => item.id === id)
-            console.log(id)
+            const index = list.findIndex((item) => `${item.id}` === `${id}`)
+            // console.log(id)
             if (index < 0) {
+              const questionType = this.subjects.find((obj) => `${obj.id}` === `${id}`)
               list.push({
                 itemId: [el],
                 number: [`${i + 1}`],
                 questions: [target],
                 answer: [anser],
                 id,
-                questionTypeName: this.subjects.find((obj) => obj.id === id)?.subjectTitle,
+                questionTypeName: questionType?.subjectTitle,
               })
             } else {
               list[index].number.push(`${i + 1}`)

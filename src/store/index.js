@@ -40,7 +40,7 @@ export default new Vuex.Store({
     },
     // 删除题块
     delItem(state, { itemId, id }) {
-      console.log(itemId, state.itemIds.findIndex((el) => el === itemId))
+      // console.log(itemId, state.itemIds.findIndex((el) => el === itemId))
       const index = state.itemIds.findIndex((el) => el === itemId)
       state.itemIds.splice(index, 1)
       // 同时subjects对应题量-1
@@ -81,17 +81,17 @@ export default new Vuex.Store({
       }
     },
     // 删除题型
-    delQuestionType(state, questionTypeId) {
-      console.log(questionTypeId)
+    delQuestionType(state, id) {
+      console.log(id)
       const tmp = new Map()
-      const contents = state.content.filter((el) => state.itemIds.includes(el.itemId)).filter((el) => el.questionTypeId === questionTypeId).map((el) => el.itemId).filter((item) => !tmp.has(item) && tmp.set(item, 1))
+      const contents = state.content.filter((el) => state.itemIds.includes(el.itemId)).filter((el) => `${el.id}` === `${id}`).map((el) => el.itemId).filter((item) => !tmp.has(item) && tmp.set(item, 1))
       contents.forEach((el) => {
-        const index = state.itemIds.findIndex((item) => item === el.itemId)
+        const index = state.itemIds.findIndex((item) => item === el)
         if (index > -1) {
           state.itemIds.splice(index, 1)
         }
       })
-      const subIndex = state.subjects.findIndex((el) => el.questionTypeId === questionTypeId)
+      const subIndex = state.subjects.findIndex((el) => `${el.id}` === `${id}`)
       state.subjects.splice(subIndex, 1)
     },
   },

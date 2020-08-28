@@ -98,13 +98,13 @@ export default {
       this.showEditModal = true
     },
     del(record) {
-      const { questionTypeId } = record
+      const { id } = record
       // 删除
       this.$confirm({
         title: '提示',
         content: '确定要删除这个题型吗？',
         onOk: () => {
-          this.delQuestionType(questionTypeId)
+          this.delQuestionType(id)
         },
       })
     },

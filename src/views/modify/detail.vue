@@ -2,12 +2,10 @@
   <div class="modify">
     <main-frame>
       <div slot="content" class="modify-content">
-        <a-skeleton :loading="loading" active>
-          <question-detail />
-        </a-skeleton>
+        <question-detail />
       </div>
       <div slot="action" class="modify-action">
-        <actions v-if="!loading" />
+        <actions />
       </div>
     </main-frame>
   </div>

@@ -164,7 +164,7 @@ export default {
     // 是否为完形填空
     isFillup() {
       if (!this.currentQuestion || !this.currentQuestion.length) return false
-      return this.currentQuestion[this.currentQuestion.length - 1].content.indexOf('<table') > -1
+      return this.currentQuestion[this.currentQuestion.length - 1].content.indexOf('<table') > -1 && this.questionTypeId === 5
     },
     // 题目
     question() {
@@ -360,8 +360,14 @@ export default {
       this.updateTable(table, text)
     },
     move(direction, optionIndex) {
-      const option = JSON.parse(JSON.stringify(this.option))
-      const options = adjustOrder(direction, option, optionIndex)
+      let option
+      let options
+      if (this.optionSplit) {
+        // 选项分开是调整content顺序
+      } else {
+        option = JSON.parse(JSON.stringify(this.option))
+        options = adjustOrder(direction, option, optionIndex)
+      }
       this.handleOptionData(options)
     },
     moveDown(optionIndex, queIndex) {
@@ -392,7 +398,21 @@ export default {
         // 普通选择题只需要在当前选项行push即可
         const { option } = this
         if (this.optionSplit) {
-          // 选项分开的需要增加一行新content
+          const {
+            contentId, itemId, id, anser, type,
+          } = this.currentQuestion[0]
+          // 选项分开的直接增加一行新content
+          const content = this.currentQuestion.concat([{
+            contentId,
+            itemId,
+            id,
+            anser,
+            type,
+            content: '',
+            text: '',
+            options: [{ option: options[option.length], value: '' }],
+          }])
+          this.updateOptions(content)
         } else {
           this.handleOptionData([...option, { option: options[option.length], value: '' }])
         }
@@ -412,7 +432,7 @@ export default {
       })
     },
     handleChange(props, values) {
-      console.log(values)
+      // console.log(values)
       if (values.optionNum) {
         this.optionLen = values.optionNum
       }

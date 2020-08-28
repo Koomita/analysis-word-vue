@@ -23,6 +23,7 @@ export const formatTableString = (tableData) => {
 }
 
 export const formatTableOptions = (text) => {
+  if (!text) return []
   const options = []
   // 匹配题号
   do {
