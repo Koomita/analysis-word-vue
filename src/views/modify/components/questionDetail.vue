@@ -306,6 +306,7 @@ export default {
     updateTable(table, text) {
       const index = this.content.findIndex((el) => el.itemId === this.currentItemId)
       const endIndex = this.currentQuestion.length + index
+      console.log(this.currentQuestion[this.currentQuestion.length - 1])
       const currentContent = [
         ...this.currentQuestion.slice(0, this.currentQuestion.length - 1),
         {
@@ -408,8 +409,8 @@ export default {
             id,
             anser,
             type,
-            content: '',
-            text: '',
+            content: `${options[option.length]}．`,
+            text: `${options[option.length]}．`,
             options: [{ option: options[option.length], value: '' }],
           }])
           this.updateOptions(content)

@@ -1,24 +1,24 @@
 export const formatTableString = (tableData) => {
-  let table = '<table>'
+  let table = '<table><tbody>'
   let text = ''
-  let i = tableData.length - 1
+  let i = 0
   do {
     const el = tableData[i]
-    table += `<tr>（${i}）`
-    text += `（${i}）`
-    let j = el.options.length - 1
+    table += '<tr>'
+    text += `（${i + 1}）`
+    let j = 0
     do {
       const item = el.options[j]
-      table += `<td>${item.option}．${item.value}</td>`
-      text += `${item.option}．${item.value}`
-      if (j === 0) {
+      table += `<td>（${j === 0 ? i + 1 : ''}）${item.option}．${item.value}</td>`
+      text += `${item.option}．${item.value} `
+      if (j === el.options.length - 1) {
         table += '</tr>'
       }
-      j -= 1
-    } while (j > -1)
-    i -= 1
-  } while (i > -1)
-  table += '</table>'
+      j += 1
+    } while (j < el.options.length)
+    i += 1
+  } while (i < tableData.length)
+  table += '</tbody></table>'
   return { table, text }
 }
 
