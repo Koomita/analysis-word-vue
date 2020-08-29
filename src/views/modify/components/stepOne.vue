@@ -42,9 +42,6 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="题量">
-          <a-input-number v-decorator="['count', { initialValue: count }]"></a-input-number>
-        </a-form-item>
       </a-form>
     </a-modal>
   </div>
@@ -125,7 +122,8 @@ export default {
         if (!err) {
           const { subjects } = this
           const index = subjects.findIndex((el) => el.id === values.id)
-          this.updateSubjects({ item: { ...subjects[index], ...values }, index })
+          const count = (subjects[index]?.count || 0) + 1
+          this.updateSubjects({ item: { ...subjects[index], ...values, count }, index })
           this.showEditModal = false
         }
       })

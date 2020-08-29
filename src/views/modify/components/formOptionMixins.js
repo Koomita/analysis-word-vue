@@ -30,7 +30,7 @@ export default {
             'answers',
             {
               rules: [{ required: true, message: '请选择答案' }],
-              initialValue: '',
+              initialValue: this.currentItem?.answers,
             },
           ],
           placeholder: '请填写…（格式：ABCD）',
@@ -41,12 +41,13 @@ export default {
           decorator: [
             'difficultyCoefficient',
             {
-              rule: [
+              rules: [
                 {
                   required: true,
                   message: '请选择难度',
                 },
               ],
+              initialValue: this.currentItem?.difficultyCoefficient,
             },
           ],
           options: [
@@ -83,6 +84,7 @@ export default {
                   message: '请选择知识点',
                 },
               ],
+              initialValue: this.currentItem?.pointIds,
             },
           ],
         },
@@ -93,7 +95,7 @@ export default {
             'analysis',
             {
               rules: [{ required: true, message: '请输入解析' }],
-              initialValue: '',
+              initialValue: this.currentItem?.analysis,
             },
           ],
         },
@@ -134,7 +136,9 @@ export default {
               label: 'questionClassName',
               value: 'id',
             },
-            decorator: ['questionClassId'],
+            decorator: ['questionClassId', {
+              initialValue: this.currentItem?.questionClassId,
+            }],
           },
           {
             label: '来源',
@@ -144,7 +148,9 @@ export default {
               label: 'sourceName',
               value: 'sourceId',
             },
-            decorator: ['sourceId'],
+            decorator: ['sourceId', {
+              initialValue: this.currentItem?.sourceId,
+            }],
           },
           {
             label: '章节信息',
@@ -156,7 +162,9 @@ export default {
             type: 'tree-select',
             mode: 'multiple',
             options: this.dimensionPoints,
-            decorator: ['dimensionPointIds'],
+            decorator: ['dimensionPointIds', {
+              initialValue: this.currentItem?.dimensionPointIds,
+            }],
             replaceFields: {
               label: 'text',
               value: 'id',
@@ -168,7 +176,9 @@ export default {
             type: 'tree-select',
             mode: 'multiple',
             options: this.dimensionCapabilities,
-            decorator: ['dimensionCapabilityIds'],
+            decorator: ['dimensionCapabilityIds', {
+              initialValue: this.currentItem?.dimensionCapabilityIds,
+            }],
             replaceFields: {
               label: 'text',
               value: 'id',
@@ -180,7 +190,9 @@ export default {
             type: 'tree-select',
             mode: 'multiple',
             options: this.dimensionAttainments,
-            decorator: ['dimensionAttainmentIds'],
+            decorator: ['dimensionAttainmentIds', {
+              initialValue: this.currentItem?.dimensionAttainmentIds,
+            }],
             replaceFields: {
               label: 'text',
               value: 'id',
@@ -192,7 +204,9 @@ export default {
             type: 'tree-select',
             mode: 'multiple',
             options: this.dimensionCoreValues,
-            decorator: ['dimensionCoreValueIds'],
+            decorator: ['dimensionCoreValueIds', {
+              initialValue: this.currentItem?.dimensionCoreValueIds,
+            }],
             replaceFields: {
               label: 'text',
               value: 'id',

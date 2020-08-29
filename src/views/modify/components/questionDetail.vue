@@ -48,7 +48,6 @@
               :key="`${ans.answerNo}${ansIndex}-${opt.option}${oIndex}`"
               :slot="`${ans.answerNo}-${opt.option}`"
             >
-              <!-- <p v-if="oIndex === 0">{{ ans.answerNo }}</p> -->
               <div class="flex-item">
                 <editor
                   v-decorator="[`${ans.answerNo}-${opt.option}`, {
@@ -157,6 +156,7 @@ export default {
       'dimensionCoreValues',
       'editions',
       'subjectId',
+      'items',
     ]),
     currentQuestion() {
       // 找出当前题目的内容
@@ -199,6 +199,11 @@ export default {
         return option
       }
       return this.currentQuestion.filter((el) => el.options && el.options.length).map((el) => el.options || []).flat()
+    },
+    // 如果已经设置过答案，回显
+    currentItem() {
+      if (!this.items.length) return {}
+      return this.items.find((el) => el.itemId === this.currentItemId) || {}
     },
   },
   watch: {
@@ -284,7 +289,7 @@ export default {
       if (index === 0) {
         return icons.slice(0, 2)
       }
-      if (index === this.options.length - 1) {
+      if (index === this.option.length - 1) {
         return [icons[0], icons[2]]
       }
       return icons
