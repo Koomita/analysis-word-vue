@@ -113,10 +113,12 @@ export default {
       if (this.content.length) {
         this.content.forEach((el) => {
           const {
-            content, itemId, id, contentId,
+            itemId, id, contentId,
           } = el
+          let { content } = el
           const arr = this.init ? this.itemIds : this.itemContents
           const paraIndex = arr.findIndex((item) => item === itemId)
+          content = content.indexOf('<table') > -1 ? `${content.replace('<table', `<table data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"`)}` : content
           if (paraIndex > -1) {
             if (!itemIds.includes(itemId)) {
               itemIds.push(itemId)
@@ -150,9 +152,9 @@ export default {
       // 保存题块
       const parser = new DOMParser()
       const currentDom = parser.parseFromString(content, 'text/html')
-      const currentContent = Array.from(currentDom.getElementsByTagName('p'))
-      const contents = currentContent.map((el) => ({
-        content: el.innerHTML,
+      const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
+      const contents = currentContent.filter((el) => el.nodeName !== '#text').map((el) => ({
+        content: el.localName === 'table' ? `<table>${el.innerHTML}</table>` : el.innerHTML,
         contentId: el.dataset.contentid,
       }))
       this.items = contents
