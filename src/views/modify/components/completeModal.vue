@@ -8,14 +8,16 @@
     dialog-class="complete-modal"
   >
     <div class="modal-body">
-      <h4>提示</h4>
+      <h4 style="font-zise: 18px;">提示</h4>
       <div class="success">
-        <a-icon type="check-circle" />
-        上传成功
+        <p>
+          <a-icon :style="{fontSize:'50px'}" type="check-circle" theme="twoTone" two-tone-color="#52c41a" />
+        </p>
+        上传试卷成功！
       </div>
       <div class="modal-footer">
         <a-button>上传完成</a-button>
-        <a-button type="primary">生成试卷</a-button>
+        <a-button type="primary" @click="$emit('next')">生成试卷</a-button>
       </div>
     </div>
   </a-modal>
@@ -31,7 +33,7 @@ export default {
   computed: {},
   methods: {
     getContainer() {
-      return document.querySelector('.detail-modify')
+      return document.querySelector('.step-flow')
     },
   },
 }
@@ -45,6 +47,8 @@ export default {
     .modal-footer {
       display: flex;
       justify-content: space-between;
+      margin-top: 50px;
+      padding: 0 10px;
     }
   }
 }

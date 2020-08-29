@@ -101,7 +101,6 @@
         <a-button type="primary" @click="save">保存</a-button>
       </p>
     </a-skeleton>
-    <complete-modal :visible="showCompleteModal" />
   </div>
 </template>
 <script>
@@ -113,7 +112,6 @@ import icon3 from '@/assets/up@2x.png'
 import FormField from '@/components/formField.vue'
 import editor from '@/components/tinymce.vue'
 import formOptionMixins from './formOptionMixins'
-import completeModal from './completeModal.vue'
 import { formatTableString, formatTableOptions, adjustOrder } from '../utils/utils'
 
 export default {
@@ -121,11 +119,9 @@ export default {
   components: {
     FormField,
     editor,
-    completeModal,
   },
   data() {
     return {
-      showCompleteModal: false,
       options: ['A', 'B', 'C', 'D'],
       expend: false,
       form: this.$form.createForm(this, {

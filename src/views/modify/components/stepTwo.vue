@@ -27,15 +27,22 @@
     </div>
     <p class="btn-box">
       <a-button :disabled="btnDisabled" type="primary" @click="upload">上传题目</a-button>
+      <complete-modal :visible="showCompleteModal" @next="nextStep" />
     </p>
   </div>
 </template>
 <script>
 import { mapState, mapMutations } from 'vuex'
+import completeModal from './completeModal.vue'
 
 export default {
+  components: {
+    completeModal,
+  },
   data() {
-    return {}
+    return {
+      showCompleteModal: true,
+    }
   },
   computed: {
     ...mapState(['questionTypes', 'itemIds', 'content', 'currentItemId', 'items', 'subjectId', 'teacherId', 'subjects']),
@@ -100,10 +107,13 @@ export default {
       if (res.status === 10001) {
         const { data } = res.dataInfo // 试题id列表
         this.updateState({ name: 'testIds', value: data })
-        this.$message.success('上传成功')
-        this.updateState({ name: 'step', value: 2 })
-        this.$router.push('/paper')
+        this.showCompleteModal = true
       }
+    },
+    nextStep() {
+      this.showCompleteModal = false
+      this.updateState({ name: 'step', value: 2 })
+      this.$router.push('/paper')
     },
   },
 }
