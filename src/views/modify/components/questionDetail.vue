@@ -106,6 +106,7 @@
   </div>
 </template>
 <script>
+import { v4 } from 'uuid'
 import { mapState, mapActions, mapMutations } from 'vuex'
 import icon1 from '@/assets/trash@2x.png'
 import icon2 from '@/assets/down@2x.png'
@@ -361,15 +362,39 @@ export default {
       this.updateTable(table, text)
     },
     move(direction, optionIndex) {
-      let option
       let options
       if (this.optionSplit) {
         // 选项分开是调整content顺序
+        options = this.currentQuestion.filter((el) => el.options && el.options.length)
+        const num = {
+          up: -1,
+          down: 1,
+        }
+        const current = options[optionIndex]
+        const target = options[optionIndex + num[direction]]
+        if (num[direction]) {
+          options.splice(optionIndex + num[direction], 1, {
+            ...current,
+            content: `${target.options[0].option}．${current.options[0].value}`,
+            options: [{ option: target.options[0].option, value: current.options[0].value }],
+            text: `${target.options[0].option}．${current.options[0].value}`,
+          })
+          options.splice(optionIndex, 1, {
+            ...target,
+            content: `${current.options[0].option}．${target.options[0].value}`,
+            options: [{ option: current.options[0].option, value: target.options[0].value }],
+            text: `${current.options[0].option}．${target.options[0].value}`,
+          })
+        } else {
+          options.splice(optionIndex, 1)
+        }
+        options = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(options)
+        this.updateOptions(options)
       } else {
-        option = JSON.parse(JSON.stringify(this.option))
+        const option = JSON.parse(JSON.stringify(this.option))
         options = adjustOrder(direction, option, optionIndex)
+        this.handleOptionData(options)
       }
-      this.handleOptionData(options)
     },
     moveDown(optionIndex, queIndex) {
       !this.isFillup && this.move('down', optionIndex)
@@ -400,11 +425,11 @@ export default {
         const { option } = this
         if (this.optionSplit) {
           const {
-            contentId, itemId, id, anser, type,
+            itemId, id, anser, type,
           } = this.currentQuestion[0]
           // 选项分开的直接增加一行新content
           const content = this.currentQuestion.concat([{
-            contentId,
+            contentId: v4(),
             itemId,
             id,
             anser,

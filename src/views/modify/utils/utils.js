@@ -55,15 +55,15 @@ export const formatTableOptions = (text) => {
 }
 
 export const adjustOrder = (direction, arr, index) => {
-  const prev = arr[index - 1]
+  const num = {
+    up: -1,
+    down: 1,
+  }
   const current = arr[index]
-  const next = arr[index + 1]
-  if (direction === 'up') {
-    arr.splice(index, 1, { option: current.option, value: prev.value })
-    arr.splice(index - 1, 1, { option: prev.option, value: current.value })
-  } else if (direction === 'down') {
-    arr.splice(index, 1, { option: current.option, value: next.value })
-    arr.splice(index + 1, 1, { option: next.option, value: current.value })
+  const target = arr[index + num[direction]]
+  if (num[direction]) {
+    arr.splice(index, 1, { option: current.option, value: target.value })
+    arr.splice(index + num[direction], 1, { option: target.option, value: current.value })
   } else {
     arr.splice(index, 1)
   }
