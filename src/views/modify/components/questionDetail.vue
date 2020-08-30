@@ -113,6 +113,7 @@ import FormField from '@/components/formField.vue'
 import editor from '@/components/tinymce.vue'
 import formOptionMixins from './formOptionMixins'
 import { formatTableString, formatTableOptions, adjustOrder } from '../utils/utils'
+import { delete } from 'vue/types/umd'
 
 export default {
   mixins: [formOptionMixins],
@@ -453,6 +454,20 @@ export default {
             // 处理完形填空选项
             const { table } = formatTableString(this.option)
             values.options = table
+            // 删除ABCD
+            const { option } = this
+            await option.forEach(async (el) => {
+              await el.options.forEach((item, index) => {
+                delete values[`${el.answerNo}-${item.option}`]
+              })
+            })
+          } else if (this.option.length) {
+            // 删除ABCD
+            const option = this.option.map((el) => el.option)
+            await option.forEach((el) => {
+              delete values[el]
+            })
+            values.options = this.option.map(el => `${el.option}．${el.value}`).join(' ')
           }
           this.updateItems(values)
         }
