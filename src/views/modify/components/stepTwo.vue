@@ -61,13 +61,14 @@ export default {
             // console.log(id)
             if (index < 0) {
               const questionType = this.subjects.find((obj) => `${obj.id}` === `${id}`)
+              const subjectType = this.questionTypes.find((obj) => `${obj.id}` === `${id}`)
               list.push({
                 itemId: [el],
                 number: [`${i + 1}`],
                 questions: [target],
                 answer: [anser],
                 id,
-                questionTypeName: questionType?.subjectTitle,
+                questionTypeName: questionType?.subjectTitle || subjectType?.name,
               })
             } else {
               list[index].number.push(`${i + 1}`)
