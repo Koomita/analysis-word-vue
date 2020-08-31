@@ -7,75 +7,79 @@
         :label-col="{span: 3}"
         :wrapper-col="{span: 18}"
       >
-        <!-- 普通选择题 -->
-        <template v-if="option.length && !isOptionGroup">
-          <div
-            v-for="(opt, oIndex) in option"
-            :key="`detail-${currentItemId}-${opt.option}`"
-            :slot="opt.option"
-          >
-            <div class="flex-item">
-              <editor
-                v-decorator="[opt.option, {
-                  rules: [{ required: true, message: `请填写选项${opt.option}` }],
-                  initialValue: opt.value
-                }]"
-                :id="opt.option"
-                :inline="true"
-                style="flex: 1;"
-              />
-              <span>
-                <img
-                  v-for="(icon, icIndex) in getIcons(oIndex)"
-                  :key="`icon-${oIndex}-${icIndex}`"
-                  :src="icon.src"
-                  @click="icon.func(oIndex)"
-                />
-              </span>
-            </div>
-            <a-button
-              v-if="oIndex === option.length - 1"
-              class="add-btn"
-              @click="pushOption"
-            > <a-icon type="plus" /> 添加选项</a-button>
-          </div>
-        </template>
-        <!-- 完形填空/选项分组的选择题 -->
-        <template v-else-if="option.length && isOptionGroup">
-          <template v-for="(ans, ansIndex) in option">
+        <!-- 非判断题 -->
+        <template v-if="questionTypeId !== 3 && option.length">
+          <!-- 普通选择题 -->
+          <template v-if="!isOptionGroup">
             <div
-              v-for="(opt, oIndex) in ans.options"
-              :key="`${ans.answerNo}${ansIndex}-${opt.option}${oIndex}`"
-              :slot="`${ans.answerNo}-${opt.option}`"
+              v-for="(opt, oIndex) in option"
+              :key="`detail-${currentItemId}-${opt.option}`"
+              :slot="opt.option"
             >
               <div class="flex-item">
                 <editor
-                  v-decorator="[`${ans.answerNo}-${opt.option}`, {
-                    rules: [{ required: true, message: `请填写选项${opt.option}` }],
-                    initialValue: opt.value
-                  }]"
-                  :id="`${ans.answerNo}-${opt.option}`"
+                  v-decorator="[opt.option, {
+                  rules: [{ required: true, message: `请填写选项${opt.option}` }],
+                  initialValue: opt.value
+                }]"
+                  :id="opt.option"
                   :inline="true"
-                  style="flex:1;"
+                  style="flex: 1;"
                 />
                 <span>
                   <img
                     v-for="(icon, icIndex) in getIcons(oIndex)"
                     :key="`icon-${oIndex}-${icIndex}`"
                     :src="icon.src"
-                    @click="icon.func(oIndex, ansIndex)"
+                    @click="icon.func(oIndex)"
                   />
                 </span>
               </div>
-              <template v-if="oIndex === ans.options.length - 1">
-                <p class="del-tip" @click="delTest(ansIndex)">删除该小题</p>
-                <template v-if="ansIndex === option.length - 1">
-                  <a-button class="add-btn" @click="pushOption"> <a-icon type="plus" /> 添加小题</a-button>
-                </template>
-              </template>
+              <a-button v-if="oIndex === option.length - 1" class="add-btn" @click="pushOption">
+                <a-icon type="plus" />添加选项
+              </a-button>
             </div>
           </template>
+          <!-- 完形填空/选项分组的选择题 -->
+          <template v-else>
+            <template v-for="(ans, ansIndex) in option">
+              <div
+                v-for="(opt, oIndex) in ans.options"
+                :key="`${ans.answerNo}${ansIndex}-${opt.option}${oIndex}`"
+                :slot="`${ans.answerNo}-${opt.option}`"
+              >
+                <div class="flex-item">
+                  <editor
+                    v-decorator="[`${ans.answerNo}-${opt.option}`, {
+                    rules: [{ required: true, message: `请填写选项${opt.option}` }],
+                    initialValue: opt.value
+                  }]"
+                    :id="`${ans.answerNo}-${opt.option}`"
+                    :inline="true"
+                    style="flex:1;"
+                  />
+                  <span>
+                    <img
+                      v-for="(icon, icIndex) in getIcons(oIndex)"
+                      :key="`icon-${oIndex}-${icIndex}`"
+                      :src="icon.src"
+                      @click="icon.func(oIndex, ansIndex)"
+                    />
+                  </span>
+                </div>
+                <template v-if="oIndex === ans.options.length - 1">
+                  <p class="del-tip" @click="delTest(ansIndex)">删除该小题</p>
+                  <template v-if="ansIndex === option.length - 1">
+                    <a-button class="add-btn" @click="pushOption">
+                      <a-icon type="plus" />添加小题
+                    </a-button>
+                  </template>
+                </template>
+              </div>
+            </template>
+          </template>
         </template>
+
         <div slot="para" class="flex-select">
           <a-select v-model="editionId" placeholder="请选择" @change="getGrades">
             <a-select-option
@@ -112,7 +116,11 @@ import icon3 from '@/assets/up@2x.png'
 import FormField from '@/components/formField.vue'
 import editor from '@/components/tinymce.vue'
 import formOptionMixins from './formOptionMixins'
-import { formatTableString, formatTableOptions, adjustOrder } from '../utils/utils'
+import {
+  formatTableString,
+  formatTableOptions,
+  adjustOrder,
+} from '../utils/utils'
 
 export default {
   mixins: [formOptionMixins],
@@ -161,17 +169,29 @@ export default {
     // 是否为完形填空
     isFillup() {
       if (!this.currentQuestion || !this.currentQuestion.length) return false
-      return this.currentQuestion[this.currentQuestion.length - 1].content.indexOf('<table') > -1 && this.questionTypeId === 5
+      return (
+        this.currentQuestion[this.currentQuestion.length - 1].content.indexOf(
+          '<table',
+        ) > -1 && this.questionTypeId === 5
+      )
     },
     // 题目
     question() {
-      if (!this.currentQuestion || !this.currentQuestion.length || this.loading) return ''
+      if (!this.currentQuestion || !this.currentQuestion.length || this.loading) { return '' }
       // 完形填空题目，选项在最后一条，内容为表格
       if (this.isFillup) {
-        return this.currentQuestion.filter((el, i) => i < this.currentQuestion.length - 1).map((el) => el.content).join('')
+        return this.currentQuestion
+          .filter((el, i) => i < this.currentQuestion.length - 1)
+          .map((el) => el.content)
+          .join('')
       }
       // 把有选项的content从题干中筛除再map
-      return this.currentQuestion.filter((el) => !el.options || !el.options.length).map((el) => el.content).join('') || ''
+      return (
+        this.currentQuestion
+          .filter((el) => !el.options || !el.options.length)
+          .map((el) => el.content)
+          .join('') || ''
+      )
     },
     // 题目类型id
     questionTypeId() {
@@ -182,11 +202,14 @@ export default {
     },
     // 选项是否分开，非一行n个选项
     optionSplit() {
-      return this.currentQuestion.filter((el) => el.options && el.options.length).length > 1
+      return (
+        this.currentQuestion.filter((el) => el.options && el.options.length)
+          .length > 1
+      )
     },
     // 选项
     option() {
-      if (!this.questionTypeId) return []
+      if (!this.questionTypeId || this.questionTypeId === 3) return []
       if (this.isFillup) {
         // 完形填空选项
         const answers = this.currentQuestion[this.currentQuestion.length - 1]
@@ -194,7 +217,10 @@ export default {
         const option = formatTableOptions(text)
         return option
       }
-      const option = this.currentQuestion.filter((el) => el.options && el.options.length).map((el) => el.options || []).flat()
+      const option = this.currentQuestion
+        .filter((el) => el.options && el.options.length)
+        .map((el) => el.options || [])
+        .flat()
       const multiple = option.filter((el) => el.option === 'A').length > 1
       if (multiple) {
         // 分多组
@@ -215,7 +241,9 @@ export default {
     },
     // 是否为选项分组的选择题
     isOptionGroup() {
-      return this.isFillup || Boolean(this.option.length && this.option[0].answerNo)
+      return (
+        this.isFillup || Boolean(this.option.length && this.option[0].answerNo)
+      )
     },
     // 如果已经设置过答案，回显
     currentItem() {
@@ -228,7 +256,11 @@ export default {
       handler(nv) {
         this.loading = true
         // 看看一题有几个选项
-        const list = this.content.filter((el) => el.itemId === nv).filter((el) => el.options && el.options.length).map((el) => el.options || []).flat()
+        const list = this.content
+          .filter((el) => el.itemId === nv)
+          .filter((el) => el.options && el.options.length)
+          .map((el) => el.options || [])
+          .flat()
         if (list.filter((el) => el.option === 'A').length > 1) {
           this.optionLen = list.slice(1).findIndex((el) => el.option === 'A') + 1
         }
@@ -256,10 +288,14 @@ export default {
         const binary = this.result
         onProgress()
         try {
-          const res = await that.$upload('/api/upload/fileUploadByByte.do', { file: binary })
+          const res = await that.$upload('/api/upload/fileUploadByByte.do', {
+            file: binary,
+          })
           if (res.dataInfo.path) {
             onSuccess('Ok')
-            this.fileList = [{ ...that.fileList[0], url: res.dataInfo.path, status: 'done' }]
+            this.fileList = [
+              { ...that.fileList[0], url: res.dataInfo.path, status: 'done' },
+            ]
           } else {
             const { msg } = res || { res: '网络出错' }
             that.$message.error(msg)
@@ -332,7 +368,9 @@ export default {
       })
     },
     updateTable(table, text) {
-      const index = this.content.findIndex((el) => el.itemId === this.currentItemId)
+      const index = this.content.findIndex(
+        (el) => el.itemId === this.currentItemId,
+      )
       const endIndex = this.currentQuestion.length + index
       console.log(this.currentQuestion[this.currentQuestion.length - 1])
       const currentContent = [
@@ -345,7 +383,11 @@ export default {
       ]
       this.updateState({
         name: 'content',
-        value: [...this.content.slice(0, index), ...currentContent, ...this.content.slice(endIndex)],
+        value: [
+          ...this.content.slice(0, index),
+          ...currentContent,
+          ...this.content.slice(endIndex),
+        ],
       })
       this.loading = false
     },
@@ -381,10 +423,15 @@ export default {
     },
     async adjustTable(direction, optionIndex, questionIndex) {
       this.loading = true
-      const options = JSON.parse(JSON.stringify(this.option[questionIndex].options))
+      const options = JSON.parse(
+        JSON.stringify(this.option[questionIndex].options),
+      )
       const currentAdjustTr = adjustOrder(direction, options, optionIndex)
       const option = JSON.parse(JSON.stringify(this.option))
-      option.splice(questionIndex, 1, { ...option[questionIndex], options: currentAdjustTr })
+      option.splice(questionIndex, 1, {
+        ...option[questionIndex],
+        options: currentAdjustTr,
+      })
       const { table, text } = formatTableString(option)
       this.updateTable(table, text)
     },
@@ -392,7 +439,9 @@ export default {
       let options
       if (this.optionSplit) {
         // 选项分开是调整content顺序
-        options = this.currentQuestion.filter((el) => el.options && el.options.length)
+        options = this.currentQuestion.filter(
+          (el) => el.options && el.options.length,
+        )
         const num = {
           up: -1,
           down: 1,
@@ -403,19 +452,31 @@ export default {
           options.splice(optionIndex + num[direction], 1, {
             ...current,
             content: `${target.options[0].option}．${current.options[0].value}`,
-            options: [{ option: target.options[0].option, value: current.options[0].value }],
+            options: [
+              {
+                option: target.options[0].option,
+                value: current.options[0].value,
+              },
+            ],
             text: `${target.options[0].option}．${current.options[0].value}`,
           })
           options.splice(optionIndex, 1, {
             ...target,
             content: `${current.options[0].option}．${target.options[0].value}`,
-            options: [{ option: current.options[0].option, value: target.options[0].value }],
+            options: [
+              {
+                option: current.options[0].option,
+                value: target.options[0].value,
+              },
+            ],
             text: `${current.options[0].option}．${target.options[0].value}`,
           })
         } else {
           options.splice(optionIndex, 1)
         }
-        options = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(options)
+        options = this.currentQuestion
+          .filter((el) => !el.options || !el.options.length)
+          .concat(options)
         this.updateOptions(options)
       } else {
         const option = JSON.parse(JSON.stringify(this.option))
@@ -433,7 +494,34 @@ export default {
     },
     // 添加选项
     async pushOption() {
-      const options = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+      const options = [
+        'A',
+        'B',
+        'C',
+        'D',
+        'E',
+        'F',
+        'G',
+        'H',
+        'I',
+        'J',
+        'K',
+        'L',
+        'M',
+        'N',
+        'O',
+        'P',
+        'Q',
+        'R',
+        'S',
+        'T',
+        'U',
+        'V',
+        'W',
+        'X',
+        'Y',
+        'Z',
+      ]
       if (this.isFillup) {
         this.loading = true
         // 完形填空
@@ -455,19 +543,24 @@ export default {
             itemId, id, anser, type,
           } = this.currentQuestion[0]
           // 选项分开的直接增加一行新content
-          const content = this.currentQuestion.concat([{
-            contentId: v4(),
-            itemId,
-            id,
-            anser,
-            type,
-            content: `${options[option.length]}．`,
-            text: `${options[option.length]}．`,
-            options: [{ option: options[option.length], value: '' }],
-          }])
+          const content = this.currentQuestion.concat([
+            {
+              contentId: v4(),
+              itemId,
+              id,
+              anser,
+              type,
+              content: `${options[option.length]}．`,
+              text: `${options[option.length]}．`,
+              options: [{ option: options[option.length], value: '' }],
+            },
+          ])
           this.updateOptions(content)
         } else {
-          this.handleOptionData([...option, { option: options[option.length], value: '' }])
+          this.handleOptionData([
+            ...option,
+            { option: options[option.length], value: '' },
+          ])
         }
       }
     },
@@ -492,7 +585,11 @@ export default {
             await option.forEach(async (el) => {
               await el.options.forEach((item, index) => {
                 delete values[`${el.answerNo}-${item.option}`]
-                options.push(`${index === 0 ? el.answerNo : ''}${item.option}．${item.value}`)
+                options.push(
+                  `${index === 0 ? el.answerNo : ''}${item.option}．${
+                    item.value
+                  }`,
+                )
               })
             })
             values.options = options.join(' ')
@@ -502,7 +599,9 @@ export default {
             await option.forEach((el) => {
               delete values[el]
             })
-            values.options = this.option.map((el) => `${el.option}．${el.value}`).join(' ')
+            values.options = this.option
+              .map((el) => `${el.option}．${el.value}`)
+              .join(' ')
           }
           this.updateItems(values)
         }

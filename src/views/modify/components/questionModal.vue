@@ -55,6 +55,10 @@ export default {
     submit() {
       this.$refs.formField.form.validateFields((err, values) => {
         if (!err) {
+          const item = this.questionTypes.find((el) => el.id === values.id)
+          Object.assign(values, {
+            questionTypeId: item.questionTypeId,
+          })
           this.$emit('submit', values)
         }
       })

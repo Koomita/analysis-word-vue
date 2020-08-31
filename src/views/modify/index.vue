@@ -167,7 +167,7 @@ export default {
       // 显示弹窗选择题型
       this.showModal = true
     },
-    addQuestion({ id, count }) {
+    addQuestion({ questionTypeId, id, count }) {
       // 更新题块
       const index = this.content.findIndex((el) => el.contentId === this.items[0].contentId)
       // 生成新的itemId
@@ -177,6 +177,7 @@ export default {
         ...el,
         itemId,
         id,
+        questionTypeId,
       }))
       this.updateState({
         name: 'content',
@@ -196,7 +197,7 @@ export default {
         const item = this.questionTypes.find((el) => el.id === id)
         this.updateSubjects({
           item: {
-            subjectTitle: item.name, count, id, questionTypeId: item.questionTypeId,
+            subjectTitle: item.name, count, id, questionTypeId,
           },
           index: subjects.length,
         })

@@ -1,8 +1,18 @@
 export default {
   computed: {
     formOptions() {
-      const specialAnswer = [1, 3, 9].includes(this.questionTypeId)
-      const getAnswerType = (type) => (type === 1 ? 'radio' : 'text')
+      const getAnswerType = (type) => {
+        switch (type) {
+          case 2:
+          case 9:
+            return 'text'
+          case 1:
+          case 3:
+            return 'radio'
+          default:
+            return 'editor'
+        }
+      }
       let formOptions = [
         {
           label: '题干',
@@ -22,8 +32,17 @@ export default {
         },
         {
           label: '答案',
-          type: specialAnswer ? getAnswerType(this.questionTypeId) : 'editor',
-          options: this.options.map((el) => ({ label: el, value: el })),
+          type: getAnswerType(this.questionTypeId),
+          options: this.questionTypeId === 3 ? [
+            {
+              label: '对',
+              value: true,
+            },
+            {
+              label: '错',
+              value: false,
+            },
+          ] : this.options.map((el) => ({ label: el, value: el })),
           props: {
             label: 'label',
             value: 'value',
@@ -35,7 +54,7 @@ export default {
               initialValue: this.currentItem?.answers,
             },
           ],
-          placeholder: '请填写…（格式：ABCD）',
+          placeholder: '请填写…',
           value: '主观题无需录入答案。',
         },
         {
