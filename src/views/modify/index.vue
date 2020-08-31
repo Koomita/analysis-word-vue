@@ -148,15 +148,21 @@ export default {
     change(val) {
       this.value = val
     },
-    saveblock(content) {
+    saveblock(content, nodes) {
       // 保存题块
       const parser = new DOMParser()
       const currentDom = parser.parseFromString(content, 'text/html')
       const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
-      const contents = currentContent.filter((el) => el.nodeName !== '#text').map((el) => ({
+      const contents = currentContent.filter((el) => el.nodeName !== '#text').filter((el) => !['u', 'img'].includes(el.localName)).map((el) => ({
         content: el.localName === 'table' ? `<table>${el.innerHTML}</table>` : el.innerHTML,
         contentId: el.dataset.contentid,
       }))
+      if (!contents.length) {
+        contents.push({
+          content: nodes.innerHTML,
+          contentId: nodes.dataset.contentid,
+        })
+      }
       this.items = contents
       // 显示弹窗选择题型
       this.showModal = true
