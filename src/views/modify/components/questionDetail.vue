@@ -113,7 +113,6 @@ import FormField from '@/components/formField.vue'
 import editor from '@/components/tinymce.vue'
 import formOptionMixins from './formOptionMixins'
 import { formatTableString, formatTableOptions, adjustOrder } from '../utils/utils'
-import { delete } from 'vue/types/umd'
 
 export default {
   mixins: [formOptionMixins],
@@ -467,7 +466,7 @@ export default {
             await option.forEach((el) => {
               delete values[el]
             })
-            values.options = this.option.map(el => `${el.option}．${el.value}`).join(' ')
+            values.options = this.option.map((el) => `${el.option}．${el.value}`).join(' ')
           }
           this.updateItems(values)
         }
