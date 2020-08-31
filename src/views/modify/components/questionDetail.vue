@@ -7,8 +7,8 @@
         :label-col="{span: 3}"
         :wrapper-col="{span: 18}"
       >
-        <!-- 选择题 -->
-        <template v-if="option.length && questionTypeId !== 5">
+        <!-- 普通选择题 -->
+        <template v-if="option.length && !isOptionGroup">
           <div
             v-for="(opt, oIndex) in option"
             :key="`detail-${currentItemId}-${opt.option}`"
@@ -40,8 +40,8 @@
             > <a-icon type="plus" /> 添加选项</a-button>
           </div>
         </template>
-        <!-- 完形填空 -->
-        <template v-if="isFillup">
+        <!-- 完形填空/选项分组的选择题 -->
+        <template v-else-if="option.length && isOptionGroup">
           <template v-for="(ans, ansIndex) in option">
             <div
               v-for="(opt, oIndex) in ans.options"
@@ -194,7 +194,28 @@ export default {
         const option = formatTableOptions(text)
         return option
       }
-      return this.currentQuestion.filter((el) => el.options && el.options.length).map((el) => el.options || []).flat()
+      const option = this.currentQuestion.filter((el) => el.options && el.options.length).map((el) => el.options || []).flat()
+      const multiple = option.filter((el) => el.option === 'A').length > 1
+      if (multiple) {
+        // 分多组
+        const questionLen = option.filter((el) => el.option === 'A').length
+        const list = []
+        let start = 0
+        for (let i = 0; i < questionLen; i += 1) {
+          console.log(option.slice(start, start + this.optionLen))
+          list.push({
+            answerNo: `（${i + 1}）`,
+            options: option.slice(start, start + this.optionLen),
+          })
+          start += this.optionLen
+        }
+        return list
+      }
+      return option
+    },
+    // 是否为选项分组的选择题
+    isOptionGroup() {
+      return this.isFillup || Boolean(this.option.length && this.option[0].answerNo)
     },
     // 如果已经设置过答案，回显
     currentItem() {
@@ -204,8 +225,13 @@ export default {
   },
   watch: {
     currentItemId: {
-      handler() {
+      handler(nv) {
         this.loading = true
+        // 看看一题有几个选项
+        const list = this.content.filter((el) => el.itemId === nv).filter((el) => el.options && el.options.length).map((el) => el.options || []).flat()
+        if (list.filter((el) => el.option === 'A').length > 1) {
+          this.optionLen = list.slice(1).findIndex((el) => el.option === 'A') + 1
+        }
         setTimeout(() => {
           this.loading = false
         }, 100)
@@ -453,11 +479,20 @@ export default {
             // 处理完形填空选项
             const { table } = formatTableString(this.option)
             values.options = table
+            const { option } = this
+            await option.forEach(async (el) => {
+              await el.options.forEach((item) => {
+                delete values[`${el.answerNo}-${item.option}`]
+              })
+            })
+          } else if (this.isOptionGroup) {
             // 删除ABCD
             const { option } = this
+            values.options = []
             await option.forEach(async (el) => {
               await el.options.forEach((item, index) => {
                 delete values[`${el.answerNo}-${item.option}`]
+                values.options.push(`${index === 0 ? el.answerNo : ''}${item.option}．${item.value}`)
               })
             })
           } else if (this.option.length) {

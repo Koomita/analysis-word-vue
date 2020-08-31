@@ -1,6 +1,8 @@
 export default {
   computed: {
     formOptions() {
+      const specialAnswer = [1, 3, 9].includes(this.questionTypeId)
+      const getAnswerType = (type) => (type === 1 ? 'radio' : 'text')
       let formOptions = [
         {
           label: '题干',
@@ -20,7 +22,7 @@ export default {
         },
         {
           label: '答案',
-          type: this.questionTypeId === 1 ? 'radio' : 'editor',
+          type: specialAnswer ? getAnswerType(this.questionTypeId) : 'editor',
           options: this.options.map((el) => ({ label: el, value: el })),
           props: {
             label: 'label',
@@ -29,11 +31,12 @@ export default {
           decorator: [
             'answers',
             {
-              rules: [{ required: true, message: '请选择答案' }],
+              rules: [{ required: getAnswerType(this.questionTypeId) !== 'text', message: '请选择答案' }],
               initialValue: this.currentItem?.answers,
             },
           ],
           placeholder: '请填写…（格式：ABCD）',
+          value: '主观题无需录入答案。',
         },
         {
           label: '难度',
@@ -104,7 +107,7 @@ export default {
         // 选择题
         const { option } = this
         const list = []
-        if (this.isFillup) {
+        if (this.isOptionGroup) {
           option.forEach((el) => {
             el.options.forEach((item, index) => {
               list.push({
@@ -115,7 +118,7 @@ export default {
             })
           })
           list.unshift({ label: '每空选项数', type: 'input-number', decorator: ['optionNum', { initialValue: this.optionLen }] })
-        } else if (this.questionTypeId !== 5) {
+        } else {
           option.forEach((el) => {
             list.push({
               label: `${el.option}`,
