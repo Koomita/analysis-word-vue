@@ -31,7 +31,7 @@ export default {
           decorator: [
             'answers',
             {
-              rules: [{ required: getAnswerType(this.questionTypeId) !== 'text', message: '请选择答案' }],
+              rules: [{ required: ![3, 9].includes(this.questionTypeId), message: '请选择答案' }],
               initialValue: this.currentItem?.answers,
             },
           ],

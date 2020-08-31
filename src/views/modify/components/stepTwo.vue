@@ -104,8 +104,8 @@ export default {
           return el
         }),
       })
-      if (res.status === 10001) {
-        const { data } = res.dataInfo // 试题id列表
+      const { data } = res.dataInfo || { data: [] } // 试题id列表
+      if (data.length) {
         this.updateState({ name: 'testIds', value: data })
         this.showCompleteModal = true
       }

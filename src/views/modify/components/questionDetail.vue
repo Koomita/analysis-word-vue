@@ -488,13 +488,14 @@ export default {
           } else if (this.isOptionGroup) {
             // 删除ABCD
             const { option } = this
-            values.options = []
+            const options = []
             await option.forEach(async (el) => {
               await el.options.forEach((item, index) => {
                 delete values[`${el.answerNo}-${item.option}`]
-                values.options.push(`${index === 0 ? el.answerNo : ''}${item.option}．${item.value}`)
+                options.push(`${index === 0 ? el.answerNo : ''}${item.option}．${item.value}`)
               })
             })
+            values.options = options.join(' ')
           } else if (this.option.length) {
             // 删除ABCD
             const option = this.option.map((el) => el.option)
