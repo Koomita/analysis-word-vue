@@ -27,7 +27,7 @@
     </div>
     <p class="btn-box">
       <a-button :disabled="btnDisabled" type="primary" @click="upload">上传题目</a-button>
-      <complete-modal :visible="showCompleteModal" @next="nextStep" />
+      <complete-modal :visible="showCompleteModal" @next="nextStep" @cancel="cancel" />
     </p>
   </div>
 </template>
@@ -41,7 +41,7 @@ export default {
   },
   data() {
     return {
-      showCompleteModal: true,
+      showCompleteModal: false,
     }
   },
   computed: {
@@ -114,6 +114,11 @@ export default {
       this.showCompleteModal = false
       this.updateState({ name: 'step', value: 2 })
       this.$router.push('/paper')
+    },
+    cancel() {
+      this.showCompleteModal = false
+      this.updateState({ name: 'step', value: -1 })
+      this.$router.replace('/')
     },
   },
 }
