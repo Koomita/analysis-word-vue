@@ -201,16 +201,21 @@ export default {
       }
       return 0
     },
+    // 题型唯一标识
+    questionNameId() {
+      if (this.currentQuestion.length) {
+        return this.currentQuestion[0].id
+      }
+      return 0
+    },
     // 判断当前选择题是单选、多选还是不定项
     chooseType() {
       const {
-        questionTypeId, currentQuestion, subjects, questionTypes,
+        questionTypeId, subjects, questionTypes, questionNameId,
       } = this
       if (!questionTypeId || questionTypeId !== 1) return ''
-      // 自定义的id
-      const { id } = currentQuestion[0]
       // 先从subjects找，找不到再找questionTypes里的
-      const item = subjects.find((el) => el.id === id) || questionTypes.find((el) => el.id === id)
+      const item = subjects.find((el) => el.id === questionNameId) || questionTypes.find((el) => el.id === questionNameId)
       const name = item.subjectTitle || item.name
       const types = {
         选择: 'radio',
@@ -597,6 +602,7 @@ export default {
       this.$refs.formField.form.validateFields(async (err, values) => {
         if (!err) {
           const answer = {}
+          const { questionNameId, questionTypeId } = this
           /**
            * 选择题（含单选/多选）: 1
             {"0":"A", "1": "C"}
@@ -614,7 +620,7 @@ export default {
                 [index]: el,
               })
             })
-          } else if ([1, 3, 5].includes(this.questionTypeId)) {
+          } else if ([1, 3, 5].includes(questionTypeId)) {
             // 需要构造答案的类型
             const list = values.answers.split('') || []
             await list.forEach((el, index) => {
@@ -634,7 +640,7 @@ export default {
             })
             // 选项放入content，即传完整的currentQuestion
             values.content = this.currentQuestion.map((el) => el.content).join(' ')
-          } else if (this.option.length && [1, 3].includes(this.questionTypeId)) {
+          } else if (this.option.length && [1, 3].includes(questionTypeId)) {
             // 普通选择题/判断题 传option
             const optionValues = {}
             await this.option.forEach((el) => {
@@ -645,7 +651,11 @@ export default {
             })
             values.options = optionValues
           }
-          this.updateItems(values)
+          this.updateItems({
+            ...values,
+            questionTypeId,
+            questionNameId,
+          })
         }
       })
     },
