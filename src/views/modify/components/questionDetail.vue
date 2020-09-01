@@ -597,37 +597,7 @@ export default {
     save() {
       this.$refs.formField.form.validateFields(async (err, values) => {
         if (!err) {
-          const answer = {}
-          const { questionNameId, questionTypeId } = this
-          /**
-           * 选择题（含单选/多选）: 1
-            {"0":"A", "1": "C"}
-
-            判断题：3
-            {"0": "true"}
-
-            信息匹配/完形填空/阅读理解：5
-            按题号顺序{"0": "B", "1", "B", "2": "A"}
-           */
-          if (typeof values.answers === 'object') {
-            // 多选
-            await values.answers.forEach((el, index) => {
-              Object.assign(answer, {
-                [index]: el,
-              })
-            })
-          } else if ([1, 3, 5].includes(questionTypeId)) {
-            // 需要构造答案的类型，编辑器为富文本编辑器，内容有p标签
-            const parser = new DOMParser()
-            const currentDom = parser.parseFromString(values.answers, 'text/html')
-            const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
-            await list.forEach((el, index) => {
-              Object.assign(answer, {
-                [index]: el.textContent,
-              })
-            })
-          }
-          values.answers = answer
+          const { questionTypeId, questionNameId } = this
           if (this.isFillup || this.isOptionGroup) {
             // 处理完形填空选项，信息匹配、阅读理解也不需要传option
             const { option } = this

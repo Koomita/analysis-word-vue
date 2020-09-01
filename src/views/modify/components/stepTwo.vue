@@ -97,13 +97,44 @@ export default {
     },
     async upload() {
       const { items, subjectId, teacherId } = this
+      await items.forEach(async (el) => {
+        const answer = {}
+        const { answers, questionTypeId } = el
+        /**
+         * 选择题（含单选/多选）: 1
+          {"0":"A", "1": "C"}
+
+          判断题：3
+          {"0": "true"}
+
+          信息匹配/完形填空/阅读理解：5
+          按题号顺序{"0": "B", "1", "B", "2": "A"}
+          */
+        if (typeof answers === 'object') {
+          // 多选
+          await answers.forEach((item, index) => {
+            Object.assign(answer, {
+              [index]: item,
+            })
+          })
+        } else if ([1, 3, 5].includes(questionTypeId)) {
+          // 需要构造答案的类型，编辑器为富文本编辑器，内容有p标签
+          const parser = new DOMParser()
+          const currentDom = parser.parseFromString(answers, 'text/html')
+          const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
+          await list.forEach((item, index) => {
+            Object.assign(answer, {
+              [index]: item.textContent,
+            })
+          })
+        }
+        el.answers = answer
+        delete el.itemId
+      })
       const res = await this.$post('/api/paperupload/upload/ques.do', {
         subjectId,
         teacherId,
-        items: items.map((el) => {
-          delete el.itemId
-          return el
-        }),
+        items,
       })
       const { data } = res.dataInfo || { data: [] } // 试题id列表
       if (data.length) {
