@@ -7,6 +7,7 @@ export default {
           case 9:
             return 'text'
           case 1:
+            return this.chooseType
           case 3:
             return 'radio'
           default:
@@ -36,11 +37,11 @@ export default {
           options: this.questionTypeId === 3 ? [
             {
               label: '对',
-              value: true,
+              value: 'true',
             },
             {
               label: '错',
-              value: false,
+              value: 'false',
             },
           ] : this.options.map((el) => ({ label: el, value: el })),
           props: {

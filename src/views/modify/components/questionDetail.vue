@@ -79,7 +79,6 @@
             </template>
           </template>
         </template>
-
         <div slot="para" class="flex-select">
           <a-select v-model="editionId" placeholder="请选择" @change="getGrades">
             <a-select-option
@@ -161,6 +160,8 @@ export default {
       'editions',
       'subjectId',
       'items',
+      'subjects',
+      'questionTypes',
     ]),
     currentQuestion() {
       // 找出当前题目的内容
@@ -200,6 +201,34 @@ export default {
       }
       return 0
     },
+    // 判断当前选择题是单选、多选还是不定项
+    chooseType() {
+      const {
+        questionTypeId, currentQuestion, subjects, questionTypes,
+      } = this
+      if (!questionTypeId || questionTypeId !== 1) return ''
+      // 自定义的id
+      const { id } = currentQuestion[0]
+      // 先从subjects找，找不到再找questionTypes里的
+      const item = subjects.find((el) => el.id === id) || questionTypes.find((el) => el.id === id)
+      const name = item.subjectTitle || item.name
+      const types = {
+        选择: 'radio',
+        单选: 'radio',
+        单项选择: 'radio',
+        多选: 'checkbox',
+        多项选择: 'checkbox',
+        不定项: 'checkbox',
+      }
+      let type
+      for (const [key, value] of Object.entries(types)) {
+        if (name.indexOf(key) > -1) {
+          type = value
+          break
+        }
+      }
+      return type
+    },
     // 选项是否分开，非一行n个选项
     optionSplit() {
       return (
@@ -228,7 +257,6 @@ export default {
         const list = []
         let start = 0
         for (let i = 0; i < questionLen; i += 1) {
-          console.log(option.slice(start, start + this.optionLen))
           list.push({
             answerNo: `（${i + 1}）`,
             options: option.slice(start, start + this.optionLen),
@@ -568,40 +596,30 @@ export default {
     save() {
       this.$refs.formField.form.validateFields(async (err, values) => {
         if (!err) {
-          if (this.isFillup) {
-            // 处理完形填空选项
-            const { table } = formatTableString(this.option)
-            values.options = table
+          const answer = {}
+          if (this.isFillup || this.isOptionGroup) {
+            // 处理完形填空选项，信息匹配、阅读理解也不需要传option
             const { option } = this
             await option.forEach(async (el) => {
               await el.options.forEach((item) => {
                 delete values[`${el.answerNo}-${item.option}`]
               })
             })
-          } else if (this.isOptionGroup) {
-            // 删除ABCD
-            const { option } = this
-            const options = []
-            await option.forEach(async (el) => {
-              await el.options.forEach((item, index) => {
-                delete values[`${el.answerNo}-${item.option}`]
-                options.push(
-                  `${index === 0 ? el.answerNo : ''}${item.option}．${
-                    item.value
-                  }`,
-                )
-              })
-            })
-            values.options = options.join(' ')
-          } else if (this.option.length) {
-            // 删除ABCD
+            // 完形填空的选项放入content，即传完整的currentQuestion
+            values.content = this.currentQuestion.map((el) => el.content).join(' ')
+          } else if (this.option.length && [1, 3].includes(this.questionTypeId)) {
+            // 普通选择题/判断题 传option
             const option = this.option.map((el) => el.option)
             await option.forEach((el) => {
               delete values[el]
             })
-            values.options = this.option
-              .map((el) => `${el.option}．${el.value}`)
-              .join(' ')
+            const optionValues = {}
+            await this.option.forEach((el) => {
+              Object.assign(optionValues, {
+                [el.option]: el.value,
+              })
+            })
+            values.options = optionValues
           }
           this.updateItems(values)
         }

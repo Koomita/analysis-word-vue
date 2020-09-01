@@ -51,6 +51,16 @@
           {{ opt[formItem.props && formItem.props.label || 'label'] }}
         </a-radio-button>
       </a-radio-group>
+      <a-checkbox-group
+        v-if="formItem.type === 'checkbox'"
+        v-decorator="formItem.decorator"
+      >
+        <a-checkbox
+          v-for="opt in formItem.options"
+          :key="opt[formItem.props && formItem.props.value || 'value']"
+          :value="opt[formItem.props && formItem.props.value || 'value']"
+        >{{ opt[formItem.props && formItem.props.label || 'label'] }}</a-checkbox>
+      </a-checkbox-group>
       <a-tree-select
         v-if="formItem.type === 'tree-select'"
         v-decorator="formItem.decorator"
@@ -124,7 +134,8 @@ export default {
 </script>
 <style lang="less" scoped>
 
-.ant-radio-button-wrapper {
+.ant-radio-button-wrapper, .checkbox {
+  display: inline-block;
   border-radius: 20px;
   border-left: 1px solid #e9e9e9;
   margin-left: 10px;
