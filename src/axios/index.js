@@ -5,7 +5,14 @@ const axios = Axios.create()
 
 const checkCode = (response) => {
   if (response.status > 199 && response.status < 300) {
-    return response.data
+    const { status, message, code } = response.data
+    if (status === 10001 || code === 0) {
+      return response.data
+    }
+    Notification.error({
+      message: message || '网络错误',
+    })
+    return Promise.reject(response.data)
   }
   Notification.error({
     message: response.statusText || '网络错误',

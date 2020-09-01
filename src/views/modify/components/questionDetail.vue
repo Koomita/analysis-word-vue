@@ -60,7 +60,7 @@
                   />
                   <span>
                     <img
-                      v-for="(icon, icIndex) in getIcons(oIndex)"
+                      v-for="(icon, icIndex) in getIcons(oIndex, ansIndex)"
                       :key="`icon-${oIndex}-${icIndex}`"
                       :src="icon.src"
                       @click="icon.func(oIndex, ansIndex)"
@@ -253,7 +253,7 @@ export default {
       }
       const option = this.currentQuestion
         .filter((el) => el.options && el.options.length)
-        .map((el) => el.options || [])
+        .map((el) => (el.options ? [el.options[0]] : []))
         .flat()
       const multiple = option.filter((el) => el.option === 'A').length > 1
       if (multiple) {
@@ -362,7 +362,7 @@ export default {
       })) || { dataInfo: {} }
       this.categories = res.dataInfo.data || []
     },
-    getIcons(index) {
+    getIcons(index, parentIndex) {
       const icons = [
         {
           src: icon1,
@@ -380,7 +380,7 @@ export default {
       if (index === 0) {
         return icons.slice(0, 2)
       }
-      if (index === this.option.length - 1) {
+      if (index === this.option.length - 1 || (parentIndex > -1 && index === this.option[parentIndex].options.length - 1)) {
         return [icons[0], icons[2]]
       }
       return icons

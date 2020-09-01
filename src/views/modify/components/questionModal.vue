@@ -38,13 +38,6 @@ export default {
           label: 'name',
           value: 'id',
         },
-      }, {
-        label: '题量',
-        type: 'input-number',
-        decorator: ['count', {
-          rules: [{ required: true, message: '请输入题量' }],
-          initialValue: 1,
-        }],
       }]
     },
   },
