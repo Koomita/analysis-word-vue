@@ -597,6 +597,33 @@ export default {
       this.$refs.formField.form.validateFields(async (err, values) => {
         if (!err) {
           const answer = {}
+          /**
+           * 选择题（含单选/多选）: 1
+            {"0":"A", "1": "C"}
+
+            判断题：3
+            {"0": "true"}
+
+            信息匹配/完形填空/阅读理解：5
+            按题号顺序{"0": "B", "1", "B", "2": "A"}
+           */
+          if (typeof values.answers === 'object') {
+            // 多选
+            await values.answers.forEach((el, index) => {
+              Object.assign(answer, {
+                [index]: el,
+              })
+            })
+          } else if ([1, 3, 5].includes(this.questionTypeId)) {
+            // 需要构造答案的类型
+            const list = values.answers.split('') || []
+            await list.forEach((el, index) => {
+              Object.assign(answer, {
+                [index]: el,
+              })
+            })
+          }
+          values.answers = answer
           if (this.isFillup || this.isOptionGroup) {
             // 处理完形填空选项，信息匹配、阅读理解也不需要传option
             const { option } = this
@@ -605,16 +632,13 @@ export default {
                 delete values[`${el.answerNo}-${item.option}`]
               })
             })
-            // 完形填空的选项放入content，即传完整的currentQuestion
+            // 选项放入content，即传完整的currentQuestion
             values.content = this.currentQuestion.map((el) => el.content).join(' ')
           } else if (this.option.length && [1, 3].includes(this.questionTypeId)) {
             // 普通选择题/判断题 传option
-            const option = this.option.map((el) => el.option)
-            await option.forEach((el) => {
-              delete values[el]
-            })
             const optionValues = {}
             await this.option.forEach((el) => {
+              delete values[el.option]
               Object.assign(optionValues, {
                 [el.option]: el.value,
               })
