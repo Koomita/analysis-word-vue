@@ -192,12 +192,12 @@ export default {
       const subjectIndex = subjects.findIndex((el) => el.id === id)
       if (subjectIndex > -1) {
         // 更新现有题量
-        this.updateSubjects({ item: { ...subjects[subjectIndex], count: subjects[subjectIndex].count + count }, index: subjectIndex > -1 ? subjectIndex : subjects.length })
+        this.updateSubjects({ item: { ...subjects[subjectIndex], count: subjects[subjectIndex].count + 1 }, index: subjectIndex > -1 ? subjectIndex : subjects.length })
       } else {
         const item = this.questionTypes.find((el) => el.id === id)
         this.updateSubjects({
           item: {
-            subjectTitle: item.name, count, id, questionTypeId,
+            subjectTitle: item.name, count: 1, id, questionTypeId,
           },
           index: subjects.length,
         })
