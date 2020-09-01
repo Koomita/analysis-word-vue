@@ -143,6 +143,7 @@ export default {
       adjustOptionIndex: [], // 调整的选项索引，完形填空用
       fileList: [], // 上传视频
       optionLen: 4, // 选项数
+      optionGroup: [], // 分组选择题
     }
   },
   computed: {
@@ -257,18 +258,7 @@ export default {
         .flat()
       const multiple = option.filter((el) => el.option === 'A').length > 1
       if (multiple) {
-        // 分多组
-        const questionLen = option.filter((el) => el.option === 'A').length
-        const list = []
-        let start = 0
-        for (let i = 0; i < questionLen; i += 1) {
-          list.push({
-            answerNo: `（${i + 1}）`,
-            options: option.slice(start, start + this.optionLen),
-          })
-          start += this.optionLen
-        }
-        return list
+        return this.optionGroup
       }
       return option
     },
@@ -295,13 +285,13 @@ export default {
           .map((el) => el.options || [])
           .flat()
         if (list.filter((el) => el.option === 'A').length > 1) {
+          // 分组
           this.optionLen = list.slice(1).findIndex((el) => el.option === 'A') + 1
         }
         const item = this.items.find((el) => el.itemId === nv)
-        console.log(item)
-        this.editionId = item?.bookId
-        this.gradeId = item?.editionId
-        this.cateId = item?.categoryId
+        this.editionId = item?.bookId || undefined
+        this.gradeId = item?.editionId || undefined
+        this.cateId = item?.categoryId || undefined
         setTimeout(() => {
           this.loading = false
         }, 100)
@@ -486,7 +476,9 @@ export default {
         }
         const current = options[optionIndex]
         const target = options[optionIndex + num[direction]]
+        // return console.log(options, num[direction], current, target)
         if (num[direction]) {
+          console.log(target)
           options.splice(optionIndex + num[direction], 1, {
             ...current,
             content: `${target.options[0].option}．${current.options[0].value}`,
@@ -516,11 +508,10 @@ export default {
           .filter((el) => !el.options || !el.options.length)
           .concat(options)
         this.updateOptions(options)
-      } else {
-        const option = JSON.parse(JSON.stringify(this.option))
-        options = adjustOrder(direction, option, optionIndex)
-        this.handleOptionData(options)
       }
+      const option = JSON.parse(JSON.stringify(this.option))
+      options = adjustOrder(direction, option, optionIndex)
+      this.handleOptionData(options)
     },
     moveDown(optionIndex, queIndex) {
       !this.isFillup && this.move('down', optionIndex)
