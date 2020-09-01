@@ -167,7 +167,7 @@ export default {
       // 显示弹窗选择题型
       this.showModal = true
     },
-    addQuestion({ questionTypeId, id, count }) {
+    addQuestion({ questionTypeId, id }) {
       // 更新题块
       const index = this.content.findIndex((el) => el.contentId === this.items[0].contentId)
       // 生成新的itemId
