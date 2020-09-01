@@ -253,7 +253,7 @@ export default {
       }
       const option = this.currentQuestion
         .filter((el) => el.options && el.options.length)
-        .map((el) => (el.options ? [el.options[0]] : []))
+        .map((el) => el.options)
         .flat()
       const multiple = option.filter((el) => el.option === 'A').length > 1
       if (multiple) {
