@@ -297,6 +297,11 @@ export default {
         if (list.filter((el) => el.option === 'A').length > 1) {
           this.optionLen = list.slice(1).findIndex((el) => el.option === 'A') + 1
         }
+        const item = this.items.find((el) => el.itemId === nv)
+        console.log(item)
+        this.editionId = item?.bookId
+        this.gradeId = item?.editionId
+        this.cateId = item?.categoryId
         setTimeout(() => {
           this.loading = false
         }, 100)
@@ -655,6 +660,9 @@ export default {
             ...values,
             questionTypeId,
             questionNameId,
+            bookId: this.editionId,
+            editionId: this.gradeId,
+            categoryId: this.cateId,
           })
         }
       })
