@@ -285,20 +285,13 @@ export default {
     currentItemId: {
       handler(nv) {
         this.loading = true
-        // 看看一题有几个选项
-        const list = this.content
-          .filter((el) => el.itemId === nv)
-          .filter((el) => el.options && el.options.length)
-          .map((el) => el.options || [])
-          .flat()
-        if (list.filter((el) => el.option === 'A').length > 1) {
-          // 分组
-          this.optionLen = list.slice(1).findIndex((el) => el.option === 'A') + 1
-        }
         const item = this.items.find((el) => el.itemId === nv)
         this.editionId = item?.bookId || undefined
         this.gradeId = item?.editionId || undefined
         this.cateId = item?.categoryId || undefined
+        const list = this.currentQuestion.filter((el) => el.options && el.options.length)
+        // 计算一组选项的长度
+        const optionLen = list.slice(1).findIndex((el) => el.options[0].option === 'A')
         setTimeout(() => {
           this.loading = false
         }, 100)
@@ -473,24 +466,25 @@ export default {
       this.updateTable(table, text)
     },
     async move(direction, optionIndex) {
+      const num = {
+        up: -1,
+        down: 1,
+      }
+      const current = this.option[optionIndex]
+      const contentOptions = this.currentQuestion.filter((el) => el.options && el.options.length)
       if (this.isOptionGroup) {
         // 几组ABCD选项
       } else {
         // 一行多个选项，多行
         // 只要options有值，content里面对应选项肯定就是options对应的内容
-        const current = this.option[optionIndex]
-        const contentOptions = this.currentQuestion.filter((el) => el.options && el.options.length)
         // 找到当前option所在index
         const targetItemIndex = contentOptions.findIndex((el) => el.options.findIndex((item) => item.option === current.option) > -1)
-        const num = {
-          up: -1,
-          down: 1,
-        }
         const currentItemIndex = contentOptions[targetItemIndex].options.findIndex((el) => el.option === current.option)
         if (num[direction]) {
           let target
           const specialScene = (currentItemIndex === 0 && direction === 'up') || (currentItemIndex === contentOptions[targetItemIndex].options.length - 1 && direction === 'down')
           if (specialScene) {
+            // 与不同content里的option调换位置
             if (currentItemIndex === 0 && direction === 'up') {
               target = contentOptions[targetItemIndex - 1].options[contentOptions[targetItemIndex - 1].options.length - 1]
               contentOptions[targetItemIndex].options[currentItemIndex] = {
@@ -513,6 +507,7 @@ export default {
               }
             }
           } else {
+            // 单纯的在当前content里的option调换位置
             target = contentOptions[targetItemIndex].options[currentItemIndex + num[direction]]
             contentOptions[targetItemIndex].options[currentItemIndex] = {
               option: current.option,
@@ -524,13 +519,13 @@ export default {
             }
           }
         } else if (contentOptions[targetItemIndex].options.length > 1) {
-          // 删除
+          // 删除，注意更新option
           contentOptions[targetItemIndex].options.splice(currentItemIndex, 1)
           if (!contentOptions[targetItemIndex].options.length) {
             contentOptions.splice(targetItemIndex, 1)
           }
         } else {
-          // 删除单个option
+          // 删除单个option，注意更新option
           contentOptions.splice(targetItemIndex, 1)
           await contentOptions.forEach((el, index) => {
             el.options[0].option = optionLabel[index] || ''
