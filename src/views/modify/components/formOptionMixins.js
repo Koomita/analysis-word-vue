@@ -149,32 +149,34 @@ export default {
         }
         formOptions = [formOptions[0], ...list, ...formOptions.slice(1)]
       }
+      formOptions = formOptions.concat([{
+        label: '题类',
+        type: 'radio',
+        options: this.questionClasses,
+        props: {
+          label: 'questionClassName',
+          value: 'id',
+        },
+        decorator: ['questionClassId', {
+          rules: [{ required: true, message: '请选择题类' }],
+          initialValue: this.currentItem?.questionClassId,
+        }],
+      },
+      {
+        label: '来源',
+        type: 'radio',
+        options: this.sources,
+        props: {
+          label: 'sourceName',
+          value: 'sourceId',
+        },
+        decorator: ['sourceId', {
+          rules: [{ required: true, message: '请选择来源' }],
+          initialValue: this.currentItem?.sourceId,
+        }],
+      }])
       if (this.expend) {
         formOptions = formOptions.concat([
-          {
-            label: '题类',
-            type: 'radio',
-            options: this.questionClasses,
-            props: {
-              label: 'questionClassName',
-              value: 'id',
-            },
-            decorator: ['questionClassId', {
-              initialValue: this.currentItem?.questionClassId,
-            }],
-          },
-          {
-            label: '来源',
-            type: 'radio',
-            options: this.sources,
-            props: {
-              label: 'sourceName',
-              value: 'sourceId',
-            },
-            decorator: ['sourceId', {
-              initialValue: this.currentItem?.sourceId,
-            }],
-          },
           {
             label: '章节信息',
             type: 'slot',

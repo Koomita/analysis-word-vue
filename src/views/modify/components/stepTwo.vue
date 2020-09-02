@@ -122,7 +122,8 @@ export default {
           const parser = new DOMParser()
           const currentDom = parser.parseFromString(answers, 'text/html')
           const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((item) => item.textContent)
-          const ans = list[0] ? list[0].split('') : []
+          console.log(list)
+          const ans = list[0] ? list[0].textContent.split('') : []
           await ans.forEach((item, index) => {
             Object.assign(answer, {
               [index]: item,

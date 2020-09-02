@@ -143,9 +143,9 @@ export default {
       }),
       grades: [], // 年级/学期列表
       categories: [], // 章节列表
-      editionId: '',
-      gradeId: '',
-      cateId: '',
+      editionId: undefined,
+      gradeId: undefined,
+      cateId: undefined,
       loading: false,
       adjustOptionIndex: [], // 调整的选项索引，完形填空用
       fileList: [], // 上传视频
@@ -170,6 +170,7 @@ export default {
       'items',
       'subjects',
       'questionTypes',
+      'itemIds',
     ]),
     currentQuestion() {
       // 找出当前题目的内容
