@@ -292,6 +292,22 @@ export default {
         const list = this.currentQuestion.filter((el) => el.options && el.options.length)
         // 计算一组选项的长度
         const optionLen = list.slice(1).findIndex((el) => el.options[0].option === 'A')
+        if (optionLen > -1) {
+          // 以A开头至下一个A前为一组
+          const options = []
+          for (let i = 0; i < list.length; i += 1) {
+            const el = list[i]
+            if (el.options[0].option === 'A') {
+              options.push({
+                answerNo: `（${options.length + 1 || 1}）`,
+                options: [el.options[0]],
+              })
+            } else {
+              options[options.length - 1].options.push(el.options[el.options.length - 1])
+            }
+          }
+          this.optionGroup = options
+        }
         setTimeout(() => {
           this.loading = false
         }, 100)

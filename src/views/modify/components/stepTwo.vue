@@ -122,6 +122,7 @@ export default {
           const parser = new DOMParser()
           const currentDom = parser.parseFromString(answers, 'text/html')
           const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
+          // 完形填空是个表格ORZ
           await list.forEach((item, index) => {
             Object.assign(answer, {
               [index]: item.textContent,
