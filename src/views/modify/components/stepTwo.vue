@@ -121,11 +121,11 @@ export default {
           // 需要构造答案的类型，编辑器为富文本编辑器，内容有p标签
           const parser = new DOMParser()
           const currentDom = parser.parseFromString(answers, 'text/html')
-          const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
-          // 完形填空是个表格ORZ
-          await list.forEach((item, index) => {
+          const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((item) => item.textContent)
+          const ans = list[0] ? list[0].split('') : []
+          await ans.forEach((item, index) => {
             Object.assign(answer, {
-              [index]: item.textContent,
+              [index]: item,
             })
           })
         }
