@@ -293,6 +293,9 @@ export default {
         this.editionId = item?.bookId || undefined
         this.gradeId = item?.editionId || undefined
         this.cateId = item?.categoryId || undefined
+        if (this.editionId) {
+          this.getGrades(this.editionId)
+        }
         this.updateOptionGroup()
         setTimeout(() => {
           this.loading = false
@@ -378,6 +381,9 @@ export default {
         editionId,
       })) || { dataInfo: {} }
       this.grades = res.dataInfo.data || []
+      if (this.gradeId) {
+        this.getCategories(this.gradeId)
+      }
     },
     // 根据书本获取章节信息
     async getCategories(bookId) {
