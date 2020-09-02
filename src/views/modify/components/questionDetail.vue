@@ -473,12 +473,7 @@ export default {
       this.updateTable(table, text)
     },
     async move(direction, optionIndex) {
-      // 全部选项在同一行
-      if (!this.optionSplit) {
-        const option = JSON.parse(JSON.stringify(this.option))
-        const options = adjustOrder(direction, option, optionIndex)
-        this.handleOptionData(options)
-      } else if (this.isOptionGroup) {
+      if (this.isOptionGroup) {
         // 几组ABCD选项
       } else {
         // 一行多个选项，多行
@@ -491,31 +486,49 @@ export default {
           up: -1,
           down: 1,
         }
+        const currentItemIndex = contentOptions[targetItemIndex].options.findIndex((el) => el.option === current.option)
         if (num[direction]) {
           let target
-          let changeTarget
-          const currentItemIndex = contentOptions[targetItemIndex].options.findIndex((el) => el.option === current.option)
           const specialScene = (currentItemIndex === 0 && direction === 'up') || (currentItemIndex === contentOptions[targetItemIndex].options.length - 1 && direction === 'down')
           if (specialScene) {
             if (currentItemIndex === 0 && direction === 'up') {
               target = contentOptions[targetItemIndex - 1].options[contentOptions[targetItemIndex - 1].options.length - 1]
+              contentOptions[targetItemIndex].options[currentItemIndex] = {
+                option: current.option,
+                value: target.value,
+              }
+              contentOptions[targetItemIndex - 1].options[contentOptions[targetItemIndex - 1].options.length - 1] = {
+                option: target.option,
+                value: current.value,
+              }
             } else {
               target = contentOptions[targetItemIndex + 1].options[0] || {}
+              contentOptions[targetItemIndex].options[currentItemIndex] = {
+                option: current.option,
+                value: target.value,
+              }
+              contentOptions[targetItemIndex + 1].options[0] = {
+                option: target.option,
+                value: current.value,
+              }
             }
           } else {
             target = contentOptions[targetItemIndex].options[currentItemIndex + num[direction]]
-          }
-          contentOptions[targetItemIndex].options[currentItemIndex] = {
-            option: current.option,
-            value: target.value,
-          }
-          target = {
-            option: target.option,
-            value: current.value,
+            contentOptions[targetItemIndex].options[currentItemIndex] = {
+              option: current.option,
+              value: target.value,
+            }
+            contentOptions[targetItemIndex].options[currentItemIndex + num[direction]] = {
+              option: target.option,
+              value: current.value,
+            }
           }
         } else if (contentOptions[targetItemIndex].options.length > 1) {
           // 删除
-          console.log('delllllll')
+          contentOptions[targetItemIndex].options.splice(currentItemIndex, 1)
+          if (!contentOptions[targetItemIndex].options.length) {
+            contentOptions.splice(targetItemIndex, 1)
+          }
         } else {
           // 删除单个option
           contentOptions.splice(targetItemIndex, 1)
@@ -530,6 +543,8 @@ export default {
           })
           el.content = str
         })
+        const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(contentOptions)
+        this.updateOptions(futureOption)
       }
     },
     moveDown(optionIndex, queIndex) {
