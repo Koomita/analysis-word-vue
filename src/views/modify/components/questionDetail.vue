@@ -121,6 +121,13 @@ import {
   adjustOrder,
 } from '../utils/utils'
 
+const optionLabel = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G',
+  'H', 'I', 'J', 'K', 'L', 'M', 'N',
+  'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+  'V', 'W', 'X', 'Y', 'Z',
+]
+
 export default {
   mixins: [formOptionMixins],
   components: {
@@ -375,8 +382,10 @@ export default {
       if (index === 0) {
         return icons.slice(0, 2)
       }
-      if (index === this.option.length - 1 || (parentIndex > -1 && index === this.option[parentIndex].options.length - 1)) {
+      if ((index === this.option.length - 1 && index !== 0) || (parentIndex > -1 && index === this.option[parentIndex].options.length - 1)) {
         return [icons[0], icons[2]]
+      } if (index === this.option.length - 1 && index === 0) {
+        return [icons[0]]
       }
       return icons
     },
@@ -463,101 +472,83 @@ export default {
       const { table, text } = formatTableString(option)
       this.updateTable(table, text)
     },
-    move(direction, optionIndex) {
-      let options
-      if (this.optionSplit) {
-        // 选项分开是调整content顺序
-        options = this.currentQuestion.filter(
-          (el) => el.options && el.options.length,
-        )
+    async move(direction, optionIndex) {
+      // 全部选项在同一行
+      if (!this.optionSplit) {
+        const option = JSON.parse(JSON.stringify(this.option))
+        const options = adjustOrder(direction, option, optionIndex)
+        this.handleOptionData(options)
+      } else if (this.isOptionGroup) {
+        // 几组ABCD选项
+      } else {
+        // 一行多个选项，多行
+        // 只要options有值，content里面对应选项肯定就是options对应的内容
+        const current = this.option[optionIndex]
+        const contentOptions = this.currentQuestion.filter((el) => el.options && el.options.length)
+        // 找到当前option所在index
+        const targetItemIndex = contentOptions.findIndex((el) => el.options.findIndex((item) => item.option === current.option) > -1)
         const num = {
           up: -1,
           down: 1,
         }
-        const current = options[optionIndex]
-        const target = options[optionIndex + num[direction]]
-        // return console.log(options, num[direction], current, target)
         if (num[direction]) {
-          console.log(target)
-          options.splice(optionIndex + num[direction], 1, {
-            ...current,
-            content: `${target.options[0].option}．${current.options[0].value}`,
-            options: [
-              {
-                option: target.options[0].option,
-                value: current.options[0].value,
-              },
-            ],
-            text: `${target.options[0].option}．${current.options[0].value}`,
-          })
-          options.splice(optionIndex, 1, {
-            ...target,
-            content: `${current.options[0].option}．${target.options[0].value}`,
-            options: [
-              {
-                option: current.options[0].option,
-                value: target.options[0].value,
-              },
-            ],
-            text: `${current.options[0].option}．${target.options[0].value}`,
-          })
+          let target
+          let changeTarget
+          const currentItemIndex = contentOptions[targetItemIndex].options.findIndex((el) => el.option === current.option)
+          const specialScene = (currentItemIndex === 0 && direction === 'up') || (currentItemIndex === contentOptions[targetItemIndex].options.length - 1 && direction === 'down')
+          if (specialScene) {
+            if (currentItemIndex === 0 && direction === 'up') {
+              target = contentOptions[targetItemIndex - 1].options[contentOptions[targetItemIndex - 1].options.length - 1]
+            } else {
+              target = contentOptions[targetItemIndex + 1].options[0] || {}
+            }
+          } else {
+            target = contentOptions[targetItemIndex].options[currentItemIndex + num[direction]]
+          }
+          contentOptions[targetItemIndex].options[currentItemIndex] = {
+            option: current.option,
+            value: target.value,
+          }
+          target = {
+            option: target.option,
+            value: current.value,
+          }
+        } else if (contentOptions[targetItemIndex].options.length > 1) {
+          // 删除
+          console.log('delllllll')
         } else {
-          options.splice(optionIndex, 1)
+          // 删除单个option
+          contentOptions.splice(targetItemIndex, 1)
+          await contentOptions.forEach((el, index) => {
+            el.options[0].option = optionLabel[index] || ''
+          })
         }
-        options = this.currentQuestion
-          .filter((el) => !el.options || !el.options.length)
-          .concat(options)
-        this.updateOptions(options)
+        await contentOptions.forEach(async (el) => {
+          let str = ''
+          await el.options.forEach((item) => {
+            str += `${item.option}．${item.value}`
+          })
+          el.content = str
+        })
       }
-      const option = JSON.parse(JSON.stringify(this.option))
-      options = adjustOrder(direction, option, optionIndex)
-      this.handleOptionData(options)
     },
     moveDown(optionIndex, queIndex) {
-      !this.isFillup && this.move('down', optionIndex)
+      !this.isFillup && this.move('down', optionIndex, queIndex)
       this.isFillup && this.adjustTable('down', optionIndex, queIndex)
     },
     moveUp(optionIndex, queIndex) {
-      !this.isFillup && this.move('up', optionIndex)
+      !this.isFillup && this.move('up', optionIndex, queIndex)
       this.isFillup && this.adjustTable('up', optionIndex, queIndex)
     },
     // 添加选项
     async pushOption() {
-      const options = [
-        'A',
-        'B',
-        'C',
-        'D',
-        'E',
-        'F',
-        'G',
-        'H',
-        'I',
-        'J',
-        'K',
-        'L',
-        'M',
-        'N',
-        'O',
-        'P',
-        'Q',
-        'R',
-        'S',
-        'T',
-        'U',
-        'V',
-        'W',
-        'X',
-        'Y',
-        'Z',
-      ]
       if (this.isFillup) {
         this.loading = true
         // 完形填空
         const { option } = this
         option.push({
           answerNo: `（${option.length + 1}）`,
-          options: options.slice(0, this.optionLen).map((el) => ({
+          options: optionLabel.slice(0, this.optionLen).map((el) => ({
             option: el,
             value: '',
           })),
@@ -579,16 +570,16 @@ export default {
               id,
               anser,
               type,
-              content: `${options[option.length]}．`,
-              text: `${options[option.length]}．`,
-              options: [{ option: options[option.length], value: '' }],
+              content: `${optionLabel[option.length]}．`,
+              text: `${optionLabel[option.length]}．`,
+              options: [{ option: optionLabel[option.length], value: '' }],
             },
           ])
           this.updateOptions(content)
         } else {
           this.handleOptionData([
             ...option,
-            { option: options[option.length], value: '' },
+            { option: optionLabel[option.length], value: '' },
           ])
         }
       }
