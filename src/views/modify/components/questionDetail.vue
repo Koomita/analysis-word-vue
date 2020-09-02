@@ -187,6 +187,10 @@ export default {
     // 题目
     question() {
       if (!this.currentQuestion || !this.currentQuestion.length || this.loading) { return '' }
+      const item = this.items.find((el) => el.itemId === this.currentItemId)
+      if (item) {
+        return item.content
+      }
       // 完形填空题目，选项在最后一条，内容为表格
       if (this.isFillup) {
         return this.currentQuestion
@@ -418,7 +422,7 @@ export default {
         (el) => el.itemId === this.currentItemId,
       )
       const endIndex = this.currentQuestion.length + index
-      console.log(this.currentQuestion[this.currentQuestion.length - 1])
+      // console.log(this.currentQuestion[this.currentQuestion.length - 1])
       const currentContent = [
         ...this.currentQuestion.slice(0, this.currentQuestion.length - 1),
         {
@@ -464,7 +468,7 @@ export default {
     },
     del(optionIndex, queIndex) {
       // 删除一个选项
-      !this.isFillup && this.move('del', optionIndex)
+      !this.isFillup && this.move('del', optionIndex, queIndex)
       this.isFillup && this.adjustTable('del', optionIndex, queIndex)
     },
     async adjustTable(direction, optionIndex, questionIndex) {
@@ -481,7 +485,7 @@ export default {
       const { table, text } = formatTableString(option)
       this.updateTable(table, text)
     },
-    async move(direction, optionIndex) {
+    async move(direction, optionIndex, queIndex) {
       const num = {
         up: -1,
         down: 1,
@@ -490,6 +494,42 @@ export default {
       const contentOptions = this.currentQuestion.filter((el) => el.options && el.options.length)
       if (this.isOptionGroup) {
         // 几组ABCD选项
+        // queIndex为当前选项所在小组的索引
+        // 分组的应该是一行一个option吧
+        let len = 0
+        // 找到实际contentOptions里的index
+        await this.option.slice(0, queIndex + 1).forEach((el, index) => {
+          len += index === queIndex ? optionIndex : el.options.length
+        })
+        const currentItemIndex = len
+        if (num[direction]) {
+          // 调整位置
+          const target = contentOptions[currentItemIndex + num[direction]].options[0]
+          console.log(target)
+          contentOptions.splice(currentItemIndex, 1, {
+            ...contentOptions[currentItemIndex],
+            options: [{
+              option: current.option,
+              value: target.value,
+            }],
+          })
+          contentOptions.splice(currentItemIndex + num[direction], 1, {
+            ...contentOptions[currentItemIndex + num[direction]],
+            options: [{
+              options: target.option,
+              value: current.value,
+            }],
+          })
+        } else {
+          // 删除
+          contentOptions.splice(currentItemIndex, 1)
+          // 修改当前option后的options的option
+          await contentOptions.forEach((el, index) => {
+            if (index > currentItemIndex - 1) {
+              el.options[0].option = optionLabel[index]
+            }
+          })
+        }
       } else {
         // 一行多个选项，多行
         // 只要options有值，content里面对应选项肯定就是options对应的内容
@@ -525,23 +565,30 @@ export default {
           } else {
             // 单纯的在当前content里的option调换位置
             target = contentOptions[targetItemIndex].options[currentItemIndex + num[direction]]
-            contentOptions[targetItemIndex].options[currentItemIndex] = {
+            contentOptions[targetItemIndex].options.splice(currentItemIndex, 1, {
               option: current.option,
               value: target.value,
-            }
-            contentOptions[targetItemIndex].options[currentItemIndex + num[direction]] = {
+            })
+            contentOptions[targetItemIndex].options.splice(currentItemIndex + num[direction], 1, {
               option: target.option,
               value: current.value,
-            }
+            })
           }
         } else if (contentOptions[targetItemIndex].options.length > 1) {
-          // 删除，注意更新option
+          // 删除多个option中的一个，注意更新option
           contentOptions[targetItemIndex].options.splice(currentItemIndex, 1)
           if (!contentOptions[targetItemIndex].options.length) {
             contentOptions.splice(targetItemIndex, 1)
           }
+          let index = 0
+          await contentOptions.forEach(async (el) => {
+            await el.options.forEach((item) => {
+              item.option = optionLabel[index]
+              index += 1
+            })
+          })
         } else {
-          // 删除单个option，注意更新option
+          // 删除单个单行的option，注意更新option
           contentOptions.splice(targetItemIndex, 1)
           await contentOptions.forEach((el, index) => {
             el.options[0].option = optionLabel[index] || ''
@@ -554,9 +601,9 @@ export default {
           })
           el.content = str
         })
-        const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(contentOptions)
-        this.updateOptions(futureOption)
       }
+      const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(contentOptions)
+      this.updateOptions(futureOption)
     },
     moveDown(optionIndex, queIndex) {
       !this.isFillup && this.move('down', optionIndex, queIndex)
