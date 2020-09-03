@@ -256,7 +256,9 @@ export default {
     },
     // 选项
     option() {
-      if (!this.questionTypeId || this.questionTypeId === 3) return []
+      // 只处理选择题1和英语的完形填空5
+      console.log('questionTypeId', this.questionTypeId, this.isFillup)
+      if (!this.questionTypeId || ![1, 5, 8].includes(this.questionTypeId) || (this.questionTypeId === 5 && !this.isFillup)) return []
       if (this.isFillup) {
         // 完形填空选项
         const answers = this.currentQuestion[this.currentQuestion.length - 1]
@@ -704,7 +706,7 @@ export default {
                 [el.option]: el.value,
               })
             })
-            values.options = optionValues
+            values.options = JSON.stringify(optionValues)
           }
           this.updateItems({
             ...values,

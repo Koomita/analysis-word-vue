@@ -81,34 +81,34 @@ export default {
           value: 'subjectId',
           label: 'fullName',
         },
-      }, {
-        label: '选择题类',
-        type: 'radio',
-        decorator: ['queClass', {
-          rules: [{
-            required: true,
-            message: '请选择题类',
-          }],
-        }],
-        options: this.questionClasses,
-        props: {
-          label: 'questionClassName',
-          value: 'id',
-        },
-      }, {
-        label: '选择来源',
-        type: 'radio',
-        decorator: ['source', {
-          rules: [{
-            required: true,
-            message: '请选择来源',
-          }],
-        }],
-        options: this.sources,
-        props: {
-          label: 'sourceName',
-          value: 'sourceId',
-        },
+      // }, {
+      //   label: '选择题类',
+      //   type: 'radio',
+      //   decorator: ['queClass', {
+      //     rules: [{
+      //       required: true,
+      //       message: '请选择题类',
+      //     }],
+      //   }],
+      //   options: this.questionClasses,
+      //   props: {
+      //     label: 'questionClassName',
+      //     value: 'id',
+      //   },
+      // }, {
+      //   label: '选择来源',
+      //   type: 'radio',
+      //   decorator: ['source', {
+      //     rules: [{
+      //       required: true,
+      //       message: '请选择来源',
+      //     }],
+      //   }],
+      //   options: this.sources,
+      //   props: {
+      //     label: 'sourceName',
+      //     value: 'sourceId',
+      //   },
       }]
     },
   },
@@ -116,7 +116,7 @@ export default {
     visible(nv) {
       if (nv) {
         this.getSubjects()
-        this.getQuestionClasses()
+        // this.getQuestionClasses()
       }
     },
   },
@@ -170,7 +170,7 @@ export default {
       if (values.subjectId) {
         // 修改学科，重新获取来源
         this.updateState({ name: 'subjectId', value: value.subjectId })
-        this.getSources()
+        // this.getSources()
       }
     },
   },
