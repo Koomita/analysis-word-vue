@@ -192,6 +192,12 @@ export default {
       if (item) {
         return item.content
       }
+      // 非选择题、完形填空，全部显示
+      if (![1, 5, 8].includes(this.questionTypeId) || (this.questionTypeId === 5 && !this.isFillup)) {
+        return this.currentQuestion
+          .map((el) => el.content)
+          .join('') || ''
+      }
       // 完形填空题目，选项在最后一条，内容为表格
       if (this.isFillup) {
         return this.currentQuestion
