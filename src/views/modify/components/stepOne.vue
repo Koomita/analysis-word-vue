@@ -84,11 +84,12 @@ export default {
   },
   methods: {
     ...mapMutations(['updateState', 'delQuestionType', 'updateSubjects']),
-    ...mapActions(['getQuestionTypes']),
+    ...mapActions(['getQuestionTypes', 'getQuestionClasses']),
     next() {
       // 下一步，默认编辑第一题题目详情
       this.updateState({ name: 'currentItemId', value: this.itemIds[0] })
       this.updateState({ name: 'step', value: 1 })
+      this.getQuestionClasses()
       this.$router.push('/modify/detail')
     },
     edit(record) {
