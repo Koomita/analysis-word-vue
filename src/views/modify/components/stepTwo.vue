@@ -130,7 +130,7 @@ export default {
             })
           })
         }
-        el.answers = answer
+        el.answers = JSON.stringify(answer)
         delete el.itemId
       })
       const res = await this.$post('/api/paperupload/upload/ques.do', {
