@@ -118,12 +118,16 @@ export default {
             })
           })
         } else if ([1, 3, 5].includes(questionTypeId)) {
-          // 需要构造答案的类型，编辑器为富文本编辑器，内容有p标签
-          const parser = new DOMParser()
-          const currentDom = parser.parseFromString(answers, 'text/html')
-          const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((item) => item.textContent)
-          console.log(list)
-          const ans = list[0] ? list[0].textContent.split('') : []
+          let ans = []
+          if (answers.indexOf('<p') > -1) {
+            // 需要构造答案的类型，编辑器为富文本编辑器，内容有p标签
+            const parser = new DOMParser()
+            const currentDom = parser.parseFromString(answers, 'text/html')
+            const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((item) => item.textContent)
+            ans = list[0] ? list[0].textContent.split('') : []
+          } else {
+            ans = answers.split('')
+          }
           await ans.forEach((item, index) => {
             Object.assign(answer, {
               [index]: item,

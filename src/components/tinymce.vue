@@ -76,12 +76,12 @@ export default {
       statusbar: false, // 隐藏编辑器底部的状态栏
       paste_data_images: true, // 允许粘贴图像
       menubar: false, // 隐藏最上方menu
-      plugins: 'quickbars image charmap advlist table lists paste preview fullscreen',
+      plugins: that.inline ? 'image charmap advlist table lists paste preview fullscreen' : 'quickbars image charmap advlist table lists paste preview fullscreen',
       quickbars_selection_toolbar: that.inline ? '' : 'saveblock', // 仅在第一步显示保存题块
       toolbar: 'bold italic underline strikethrough subscript superscript charmap | alignleft aligncenter alignright alignjustify | blockquote image table numlist bullist preview fullscreen',
       images_upload_handler: async (blobInfo, success, failure, progress) => {
         try {
-          const res = await that.$post('/api/upload/upload/many/base64.do', [{ type: `.${blobInfo.blob().type.split('/')[1]}`, data: blobInfo.base64() }], {
+          const res = await that.$post('/api/upload/upload/many/base64.do', [{ type: `.${blobInfo.blob().type.split('/')[1]}`, data: `data:${blobInfo.blob().type};base64,${blobInfo.base64()}` }], {
             onUploadProgress: (progressEvent) => {
               progress((progressEvent.loaded / progressEvent.total) * 100)
             },
