@@ -215,7 +215,7 @@ export default {
       return 0
     },
     // 题型唯一标识
-    questionNameId() {
+    quesTypeNameId() {
       if (this.currentQuestion.length) {
         return this.currentQuestion[0].id
       }
@@ -224,11 +224,11 @@ export default {
     // 判断当前选择题是单选、多选还是不定项
     chooseType() {
       const {
-        questionTypeId, subjects, questionTypes, questionNameId,
+        questionTypeId, subjects, questionTypes, quesTypeNameId,
       } = this
       if (!questionTypeId || questionTypeId !== 1) return ''
       // 先从subjects找，找不到再找questionTypes里的
-      const item = subjects.find((el) => el.id === questionNameId) || questionTypes.find((el) => el.id === questionNameId)
+      const item = subjects.find((el) => el.id === quesTypeNameId) || questionTypes.find((el) => el.id === quesTypeNameId)
       const name = item.subjectTitle || item.name
       const types = {
         单选: 'radio',
@@ -684,7 +684,7 @@ export default {
     save() {
       this.$refs.formField.form.validateFields(async (err, values) => {
         if (!err) {
-          const { questionTypeId, questionNameId } = this
+          const { questionTypeId, quesTypeNameId } = this
           if (this.isFillup || this.isOptionGroup) {
             // 处理完形填空选项，信息匹配、阅读理解也不需要传option
             const { option } = this
@@ -709,7 +709,7 @@ export default {
           this.updateItems({
             ...values,
             questionTypeId,
-            questionNameId,
+            quesTypeNameId,
             bookId: this.editionId,
             editionId: this.gradeId,
             categoryId: this.cateId,
