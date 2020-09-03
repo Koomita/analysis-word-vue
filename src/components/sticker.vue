@@ -57,7 +57,7 @@ export default {
       }, {
         label: '科目',
         type: 'text',
-        value: '英语',
+        value: this.subjectName,
       }, {
         type: 'slot',
         decorator: ['default'],

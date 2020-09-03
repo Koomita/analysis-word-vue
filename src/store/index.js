@@ -19,6 +19,7 @@ export default new Vuex.Store({
     categories: [], // 章节列表
     questionClasses: [], // 题类列表
     subjectId: '', // 当前试卷学科id
+    subjectName: '', // 当前试卷学科名称
     subjects: [], // 当前试卷题型列表
     content: [], // 当前试卷内容
     questionTypes: [], // 所有题型

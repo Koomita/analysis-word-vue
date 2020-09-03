@@ -168,9 +168,8 @@ export default {
     },
     formChange(props, values, value) {
       if (values.subjectId) {
-        // 修改学科，重新获取来源
         this.updateState({ name: 'subjectId', value: value.subjectId })
-        // this.getSources()
+        this.updateState({ name: 'subjectName', value: this.subjects.find((el) => el.subjectId === value.subjectId).fullName })
       }
     },
   },

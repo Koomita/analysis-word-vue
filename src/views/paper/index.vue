@@ -139,6 +139,8 @@ export default {
   padding: 20px;
   background: #fff;
   color: #485465;
+  height: 100%;
+  overflow-y: scroll;
   .paper-item {
     display: flex;
     align-items: center;
