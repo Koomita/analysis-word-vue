@@ -72,6 +72,7 @@ export default {
       height: that.height,
       browser_spellcheck: true, // 拼写检查
       branding: false, // 去水印
+      extended_valid_elements: 'svg[*]',
       // elementpath: false,  //禁用编辑器底部的状态栏
       statusbar: false, // 隐藏编辑器底部的状态栏
       paste_data_images: true, // 允许粘贴图像
@@ -104,13 +105,12 @@ export default {
               that.$emit('saveblock', editor.selection.getContent(), editor.selection.getNode())
             },
           })
-
           return {
             getMetadata() {
               return {
-              // 插件名和链接会显示在“帮助”→“插件”→“已安装的插件”中
-                name: 'Example plugin', // 插件名称
-                url: 'http://exampleplugindocsurl.com', // 作者网址
+                // 插件名和链接会显示在“帮助”→“插件”→“已安装的插件”中
+                name: '保存题块', // 插件名称
+                url: '', // 作者网址
               }
             },
           }

@@ -96,7 +96,14 @@ export default {
             ...values,
             teacherId: this.teacherId,
             subjectId: this.subjectId,
-            paragraphList: this.paperInfo,
+            paragraphList: this.paperInfo.map((el) => {
+              const { id, questionNo, score } = el
+              return {
+                questionId: id,
+                questionNo,
+                score,
+              }
+            }),
           })
           this.$message.success('生成试卷成功')
         }
