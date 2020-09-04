@@ -73,7 +73,9 @@ export default {
       browser_spellcheck: true, // 拼写检查
       branding: false, // 去水印
       extended_valid_elements: 'svg[*]',
-      convert_urls: false, // 如果您设置这个选项错误会尽量保持这些url完好无损。这个选项是默认设置为true,这意味着url将被迫是绝对或相对取决于relative_urls的状态。
+      relative_urls: false,
+      remove_script_host: false,
+      document_base_url: process.env.imgDomain,
       // elementpath: false,  //禁用编辑器底部的状态栏
       statusbar: false, // 隐藏编辑器底部的状态栏
       paste_data_images: true, // 允许粘贴图像
