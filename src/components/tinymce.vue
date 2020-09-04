@@ -75,7 +75,7 @@ export default {
       extended_valid_elements: 'svg[*]',
       relative_urls: false,
       remove_script_host: false,
-      document_base_url: process.env.imgDomain,
+      document_base_url: process.env.VUE_APP_IMGDOMAIN,
       // elementpath: false,  //禁用编辑器底部的状态栏
       statusbar: false, // 隐藏编辑器底部的状态栏
       paste_data_images: true, // 允许粘贴图像
