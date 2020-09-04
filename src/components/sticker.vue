@@ -16,18 +16,24 @@
       @cancel="showModal = false"
       @ok="saveScore"
     >
-      <h3 slot="title" class="modal-title">设置分值 <span>共{{ num }}题，总计{{ score }}分</span></h3>
+      <h3 slot="title" class="modal-title">设置分值 <span>共{{ num }}题，总计{{ score || 0 }}分</span></h3>
       <div class="modal-body">
-        <div v-for="item in paperInfo" :key="item.quesTypeNameId">
-          <h4>{{ item.paragraphName }} <span>共{{ item.questionList.length || 0 }}题，共{{ item.score * item.questionList.length }}分</span></h4>
-          <h4>每题 <a-input-number :min="0" v-model="item.score"></a-input-number>分</h4>
+        <a-button class="custom-btn" @click="changeArr">{{ customScore ? '取消自定义' : '自定义分值' }}</a-button>
+        <div v-for="item in scores" :key="item.quesTypeNameId">
+          <h4>{{ item.paragraphName }} <span>共{{ item.questionList.length || 0 }}题，共{{ (item.score || 0) * item.questionList.length }}分</span></h4>
+          <h4 v-if="!customScore">每题 <a-input-number :min="0" v-model="item.score"></a-input-number>分</h4>
+          <template v-else>
+            <h4 v-for="el in item.questionList" :key="el.questionId">
+              题号{{el.questionNo}} <a-input-number :min="0" v-model="el.score"></a-input-number>分
+            </h4>
+          </template>
         </div>
       </div>
     </a-modal>
   </a-affix>
 </template>
 <script>
-import { mapState } from 'vuex'
+import { mapMutations, mapState } from 'vuex'
 import FormField from './formField.vue'
 
 export default {
@@ -37,6 +43,8 @@ export default {
   data() {
     return {
       showModal: false,
+      customScore: false,
+      scores: [],
     }
   },
   computed: {
@@ -80,7 +88,17 @@ export default {
       return score
     },
   },
+  watch: {
+    paperInfo: {
+      handler(nv) {
+        this.scores = nv
+      },
+      deep: true,
+      immediate: true,
+    },
+  },
   methods: {
+    ...mapMutations(['updateState']),
     setScore() {
       this.showModal = true
       // console.log(this.paperInfo)
@@ -88,7 +106,21 @@ export default {
     getContainer() {
       return document.querySelector('#app')
     },
-    saveScore() {},
+    async saveScore() {
+      if (!this.customScore) {
+        await this.scores.forEach(async (el) => {
+          await el.questionList.forEach((item) => {
+            item.score = el.score
+          })
+          delete el.score
+        })
+      }
+      this.updateState({ name: 'paperInfo', value: this.scores })
+      this.showModal = false
+    },
+    changeArr() {
+      this.customScore = !this.customScore
+    },
     save() {
       this.$refs.form.form.validateFields(async (err, values) => {
         if (!err) {
@@ -97,11 +129,14 @@ export default {
             teacherId: this.teacherId,
             subjectId: this.subjectId,
             paragraphList: this.paperInfo.map((el) => {
-              const { id, questionNo, score } = el
+              const { paragraphName, questionList } = el
               return {
-                questionId: id,
-                questionNo,
-                score,
+                paragraphName,
+                questionList: questionList.map((item) => ({
+                  questionId: item.id,
+                  questionNo: item.questionNo,
+                  score: item.score,
+                })),
               }
             }),
           })
@@ -127,11 +162,17 @@ export default {
   }
 }
 .modal-body {
+  position: relative;
   .h4 {
     span {
       margin-left: 10px;
       color: #A2A6AD;
     }
+  }
+  .custom-btn {
+    position: absolute;
+    right: 20px;
+    top: 0px;
   }
 }
 </style>

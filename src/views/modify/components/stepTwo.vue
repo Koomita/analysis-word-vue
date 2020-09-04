@@ -150,12 +150,10 @@ export default {
     },
     nextStep() {
       this.showCompleteModal = false
-      this.updateState({ name: 'step', value: 2 })
       this.$router.push('/paper')
     },
     cancel() {
       this.showCompleteModal = false
-      this.updateState({ name: 'step', value: -1 })
       this.$router.replace('/')
     },
   },

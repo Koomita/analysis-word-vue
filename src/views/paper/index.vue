@@ -44,6 +44,7 @@ export default {
     ...mapState(['paperInfo']),
   },
   mounted() {
+    this.updateState({ name: 'step', value: 2 })
     this.getPaper()
   },
   methods: {
