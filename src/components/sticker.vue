@@ -112,7 +112,6 @@ export default {
           await el.questionList.forEach((item) => {
             item.score = el.score
           })
-          delete el.score
         })
       }
       this.updateState({ name: 'paperInfo', value: this.scores })
