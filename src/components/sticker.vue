@@ -128,9 +128,9 @@ export default {
             teacherId: this.teacherId,
             subjectId: this.subjectId,
             paragraphList: this.paperInfo.map((el) => {
-              const { paragraphName, questionList } = el
+              const { paragraphName, paragraphNo, questionList } = el
               return {
-                paragraphName,
+                paragraphName: `${paragraphNo}、${paragraphName}`,
                 questionList: questionList.map((item) => ({
                   questionId: item.id,
                   questionNo: item.questionNo,

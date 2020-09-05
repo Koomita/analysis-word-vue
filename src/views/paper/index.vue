@@ -1,13 +1,13 @@
 <template>
   <div class="paper">
-    <div v-for="(test, tIndex) in paperInfo" :key="test.quesTypeNameId">
+    <div v-for="(test, tIndex) in currentTests" :key="test.quesTypeNameId">
       <div class="paper-item">
         <div class="paper-block mb16">
-          <h3>{{ test.paragraphName }}</h3>
+          <h3>{{ test.paragraphNo }}、{{ test.paragraphName }}</h3>
         </div>
         <div class="action-bar">
           <img
-            v-for="(icon, i) in actionBar(tIndex, paperInfo)"
+            v-for="(icon, i) in actionBar(tIndex, currentTests)"
             :key="`paper-${tIndex}-${i}`"
             :src="icon.src"
             @click="icon.func(tIndex, 0, 'test')"
@@ -39,9 +39,36 @@ import icon1 from '@/assets/trash.png'
 import icon2 from '@/assets/down.png'
 import icon3 from '@/assets/up.png'
 
+const nums = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+
 export default {
   computed: {
     ...mapState(['paperInfo']),
+    currentTests() {
+      if (!this.paperInfo.length) return []
+      const getRealNums = (i) => {
+        const num = `${i}`.split('')
+        const no = '十'
+        if (num.startsWith('1')) {
+          return `${no}${nums[num[1]]}`
+        }
+        return `${nums[num[0]]}${no}${nums[num[1]]}`
+      }
+      let len = 0
+      return this.paperInfo.map((el, i) => {
+        const { questionList } = el
+        const res = {
+          ...el,
+          paragraphNo: i < 10 ? nums[i] : getRealNums(i),
+          questionList: questionList.map((item, index) => ({
+            ...item,
+            questionNo: len + index + 1,
+          })),
+        }
+        len += questionList.length
+        return res
+      })
+    },
   },
   mounted() {
     this.updateState({ name: 'step', value: 2 })
@@ -87,18 +114,18 @@ export default {
     },
     // 第一大题
     hanldeTestData(index, action) {
-      const list = this.paperInfo
-      const prev = this.paperInfo[index - 1]
-      const current = this.paperInfo[index]
-      const next = this.paperInfo[index + 1]
+      const list = this.currentTests
+      const prev = this.currentTests[index - 1]
+      const current = this.currentTests[index]
+      const next = this.currentTests[index + 1]
       switch (action) {
         case 'up':
-          list.splice(index, 1, prev)
-          list.splice(index - 1, 1, current)
+          list.splice(index, 1, { ...prev, paragraphNo: current.paragraphNo })
+          list.splice(index - 1, 1, { ...current, paragraphNo: prev.paragraphNo })
           break
         case 'down':
-          list.splice(index, 1, next)
-          list.splice(index + 1, 1, current)
+          list.splice(index, 1, { ...next, paragraphNo: current.paragraphNo })
+          list.splice(index + 1, 1, { ...current, paragraphNo: next.paragraphNo })
           break
         default:
           list.splice(index, 1)
@@ -108,8 +135,8 @@ export default {
     },
     // 小题
     handleSubData(index, pIndex, action) {
-      const list = this.paperInfo
-      const currentParent = this.paperInfo[pIndex].questionList
+      const list = this.currentTests
+      const currentParent = this.currentTests[pIndex].questionList
       const prev = currentParent[index - 1]
       const current = currentParent[index]
       const next = currentParent[index + 1]

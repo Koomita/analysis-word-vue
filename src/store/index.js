@@ -171,9 +171,21 @@ export default new Vuex.Store({
     async getPaper({ state, commit }) {
       const { testIds } = state
       const res = await Vue.prototype.$post('/api/paperupload/view/paper.do', testIds) || { dataInfo: {} }
+      const nums = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+      const getRealNums = (i) => {
+        const num = `${i}`.split('')
+        const no = '十'
+        if (num.startsWith('1')) {
+          return `${no}${nums[num[1]]}`
+        }
+        return `${nums[num[0]]}${no}${nums[num[1]]}`
+      }
       commit('updateState', {
         name: 'paperInfo',
-        value: res.dataInfo.data || [],
+        value: res.dataInfo.data.map((el, i) => ({
+          ...el,
+          paragraphNo: i < 10 ? nums[i] : getRealNums(i),
+        })) || [],
       })
     },
   },
