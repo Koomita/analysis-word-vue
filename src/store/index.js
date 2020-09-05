@@ -182,10 +182,41 @@ export default new Vuex.Store({
       }
       commit('updateState', {
         name: 'paperInfo',
-        value: res.dataInfo.data.map((el, i) => ({
-          ...el,
-          paragraphNo: i < 10 ? nums[i] : getRealNums(i),
-        })) || [],
+        // value: res.dataInfo.data.map((el, i) => ({
+        //   ...el,
+        //   paragraphNo: i < 10 ? nums[i] : getRealNums(i),
+        // })) || [],
+        value: [
+          {
+            quesTypeNameId: 1849,
+            paragraphName: '一、阅读理解',
+            paragraphNo: 1,
+            questionList: [
+              {
+                id: 1112,
+                questionNo: 1,
+                content: '题干',
+              },
+              {
+                id: 1113,
+                questionNo: 2,
+                content: '题干',
+              },
+            ],
+          },
+          {
+            quesTypeNameId: 1917,
+            paragraphName: '二、完形填空',
+            paragraphNo: 2,
+            questionList: [
+              {
+                id: 1114,
+                questionNo: 3,
+                content: '题干',
+              },
+            ],
+          },
+        ],
       })
     },
   },

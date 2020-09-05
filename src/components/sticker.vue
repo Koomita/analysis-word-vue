@@ -19,11 +19,11 @@
       <h3 slot="title" class="modal-title">设置分值 <span>共{{ num }}题，总计{{ score || 0 }}分</span></h3>
       <div class="modal-body">
         <div v-for="(item, i) in scores" :key="item.quesTypeNameId" class="set">
-          <h4>{{ item.paragraphName }} <span>共{{ item.questionList.length || 0 }}题，共{{ (item.score || 0) * item.questionList.length }}分</span></h4>
+          <h4>{{ item.paragraphName }} <span>共{{ item.questionList.length || 0 }}题，共{{ item.totalScore }}分</span></h4>
           <h4 v-if="!item.customScore">每题 <a-input-number :min="0" :default-value="item.score" @change="updateScore($event, i, false)"></a-input-number>分</h4>
           <template v-else>
-            <h4 v-for="el in item.questionList" :key="el.questionId">
-              题号{{el.questionNo}} <a-input-number :min="0" :default-value="el.score" @change="updateScore($event, i, true, el.questionId)"></a-input-number>分
+            <h4 v-for="(el, elIndex) in item.questionList" :key="el.questionId">
+              题号{{el.questionNo}} <a-input-number :min="0" :default-value="el.score" @change="updateScore($event, i, true, elIndex)"></a-input-number>分
             </h4>
           </template>
           <a-button class="custom-btn" @click="changeArr(i)">{{ item.customScore ? '取消自定义' : '自定义分值' }}</a-button>
@@ -79,10 +79,16 @@ export default {
       return num
     },
     score() {
-      if (!this.paperInfo.length) return 0
+      if (!this.scores.length) return 0
       let score = 0
-      this.paperInfo.forEach((el) => {
-        score += el.score * el.questionList.length
+      this.scores.forEach((el) => {
+        if (el.customScore) {
+          for (let i = 0; i < el.questionList.length; i += 1) {
+            score += el.questionList[i].score
+          }
+        } else {
+          score += el.score * el.questionList.length
+        }
       })
       return score
     },
@@ -93,6 +99,11 @@ export default {
         this.scores = nv.map((el) => ({
           ...el,
           customScore: Boolean(el.customScore),
+          totalScore: 0,
+          questionList: el.questionList.map((item) => ({
+            ...item,
+            score: item.score || 0,
+          })),
         }))
       },
       deep: true,
@@ -101,16 +112,21 @@ export default {
   },
   methods: {
     ...mapMutations(['updateState']),
-    updateScore(value, index, customScore, questionId) {
+    updateScore(value, index, customScore, quesIndex) {
       if (!customScore) {
-        this.$set(this.scores, index, { ...this.scores[index], score: value })
+        this.$set(this.scores, index, { ...this.scores[index], score: value, totalScore: value * this.scores[index].questionList.length })
       } else {
         const list = this.scores[index].questionList
-        const i = list.findIndex((el) => el.questionId === questionId)
-        list[i].score = value
+        list.splice(quesIndex, 1, { ...list[quesIndex], score: value })
+        const scores = list.map((el) => el.score || 0)
+        let totalScore = 0
+        for (let j = 0; j < scores.length; j += 1) {
+          totalScore += scores[j]
+        }
         this.$set(this.scores, index, {
           ...this.scores[index],
           questionList: list,
+          totalScore,
         })
       }
     },
@@ -133,7 +149,15 @@ export default {
       this.showModal = false
     },
     changeArr(index) {
-      this.$set(this.scores, index, { ...this.scores[index], customScore: !this.scores[index].customScore })
+      let totalScore = 0
+      if (!this.scores[index].customScore) {
+        for (let j = 0; j < this.scores[index].questionList.length; j += 1) {
+          totalScore += this.scores[index].questionList[j].score || 0
+        }
+      } else {
+        totalScore = (this.scores[index].score || 0) * this.scores[index].questionList.length
+      }
+      this.$set(this.scores, index, { ...this.scores[index], customScore: !this.scores[index].customScore, totalScore })
     },
     save() {
       this.$refs.form.form.validateFields(async (err, values) => {
