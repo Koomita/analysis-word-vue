@@ -18,15 +18,15 @@
     >
       <h3 slot="title" class="modal-title">设置分值 <span>共{{ num }}题，总计{{ score || 0 }}分</span></h3>
       <div class="modal-body">
-        <a-button class="custom-btn" @click="changeArr">{{ customScore ? '取消自定义' : '自定义分值' }}</a-button>
-        <div v-for="item in scores" :key="item.quesTypeNameId">
+        <div v-for="(item, i) in scores" :key="item.quesTypeNameId" class="set">
           <h4>{{ item.paragraphName }} <span>共{{ item.questionList.length || 0 }}题，共{{ (item.score || 0) * item.questionList.length }}分</span></h4>
-          <h4 v-if="!customScore">每题 <a-input-number :min="0" v-model="item.score"></a-input-number>分</h4>
+          <h4 v-if="!item.customScore">每题 <a-input-number :min="0" :default-value="item.score" @change="updateScore($event, i, false)"></a-input-number>分</h4>
           <template v-else>
             <h4 v-for="el in item.questionList" :key="el.questionId">
-              题号{{el.questionNo}} <a-input-number :min="0" v-model="el.score"></a-input-number>分
+              题号{{el.questionNo}} <a-input-number :min="0" :default-value="el.score" @change="updateScore($event, i, true, el.questionId)"></a-input-number>分
             </h4>
           </template>
+          <a-button class="custom-btn" @click="changeArr(i)">{{ item.customScore ? '取消自定义' : '自定义分值' }}</a-button>
         </div>
       </div>
     </a-modal>
@@ -43,7 +43,6 @@ export default {
   data() {
     return {
       showModal: false,
-      customScore: false,
       scores: [],
     }
   },
@@ -91,7 +90,10 @@ export default {
   watch: {
     paperInfo: {
       handler(nv) {
-        this.scores = nv
+        this.scores = nv.map((el) => ({
+          ...el,
+          customScore: Boolean(el.customScore),
+        }))
       },
       deep: true,
       immediate: true,
@@ -99,6 +101,19 @@ export default {
   },
   methods: {
     ...mapMutations(['updateState']),
+    updateScore(value, index, customScore, questionId) {
+      if (!customScore) {
+        this.$set(this.scores, index, { ...this.scores[index], score: value })
+      } else {
+        const list = this.scores[index].questionList
+        const i = list.findIndex((el) => el.questionId === questionId)
+        list[i].score = value
+        this.$set(this.scores, index, {
+          ...this.scores[index],
+          questionList: list,
+        })
+      }
+    },
     setScore() {
       this.showModal = true
       // console.log(this.paperInfo)
@@ -106,19 +121,19 @@ export default {
     getContainer() {
       return document.querySelector('#app')
     },
-    async saveScore() {
-      if (!this.customScore) {
-        await this.scores.forEach(async (el) => {
-          await el.questionList.forEach((item) => {
-            item.score = el.score
-          })
-        })
+    saveScore() {
+      for (let j = 0; j < this.scores.length; j += 1) {
+        if (!this.scores[j].customScore) {
+          for (let i = 0; i < this.scores[j].questionList.length; i += 1) {
+            this.scores[j].questionList[i].score = this.scores[j].score
+          }
+        }
       }
       this.updateState({ name: 'paperInfo', value: this.scores })
       this.showModal = false
     },
-    changeArr() {
-      this.customScore = !this.customScore
+    changeArr(index) {
+      this.$set(this.scores, index, { ...this.scores[index], customScore: !this.scores[index].customScore })
     },
     save() {
       this.$refs.form.form.validateFields(async (err, values) => {
@@ -161,17 +176,19 @@ export default {
   }
 }
 .modal-body {
-  position: relative;
   .h4 {
     span {
       margin-left: 10px;
       color: #A2A6AD;
     }
   }
-  .custom-btn {
-    position: absolute;
-    right: 20px;
-    top: 0px;
+  .set {
+    position: relative;
+    .custom-btn {
+      position: absolute;
+      right: 20px;
+      top: 0px;
+    }
   }
 }
 </style>
