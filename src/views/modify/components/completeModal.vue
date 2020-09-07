@@ -16,7 +16,7 @@
         上传试卷成功！
       </div>
       <div class="modal-footer">
-        <a-button>上传完成</a-button>
+        <a-button @click="back">上传完成</a-button>
         <a-button type="primary" @click="$emit('next')">生成试卷</a-button>
       </div>
     </div>
@@ -34,6 +34,9 @@ export default {
   methods: {
     getContainer() {
       return document.querySelector('.step-flow')
+    },
+    back() {
+      this.$router.replace('/')
     },
   },
 }
