@@ -99,7 +99,7 @@ export default {
         this.scores = nv.map((el) => ({
           ...el,
           customScore: Boolean(el.customScore),
-          totalScore: 0,
+          totalScore: el.totalScore || 0,
           questionList: el.questionList.map((item) => ({
             ...item,
             score: item.score || 0,
@@ -157,6 +157,7 @@ export default {
       } else {
         totalScore = (this.scores[index].score || 0) * this.scores[index].questionList.length
       }
+      // console.log('change arr', totalScore)
       this.$set(this.scores, index, { ...this.scores[index], customScore: !this.scores[index].customScore, totalScore })
     },
     save() {
