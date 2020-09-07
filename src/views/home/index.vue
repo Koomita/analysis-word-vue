@@ -38,6 +38,9 @@ export default {
       this.updateState({ name: 'teacherId', value: teacherId })
     }
     this.updateState({ name: 'step', value: -1 })
+    this.updateState({ name: 'items', value: [] })
+    this.updateState({ name: 'content', value: [] })
+    this.updateState({ name: 'itemIds', value: [] })
   },
   methods: {
     ...mapMutations(['updateState']),

@@ -179,6 +179,7 @@ export default {
             }),
           })
           this.$message.success('生成试卷成功')
+          this.$router.replace('/')
         }
       })
     },

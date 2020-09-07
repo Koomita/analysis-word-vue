@@ -51,7 +51,25 @@ export default {
           decorator: [
             'answers',
             {
-              rules: [{ required: ![3, 9].includes(this.questionTypeId), message: '请选择答案' }],
+              rules: [{
+                required: ![3, 9].includes(this.questionTypeId),
+                validator: (rule, value, cb) => {
+                  if ([3, 9].includes(this.questionTypeId)) {
+                    cb()
+                  } else if (!value) {
+                    cb(new Error(`请${this.questionTypeId !== 1 ? '填写' : '选择'}答案`))
+                  } else if (this.isFillup) {
+                    const val = value.replace('<p>', '').replace('</p>', '').split('')
+                    if (val.length !== this.option.length) {
+                      cb(new Error('请填写完整答案'))
+                    } else {
+                      cb()
+                    }
+                  } else {
+                    cb()
+                  }
+                },
+              }],
               initialValue: this.currentItem?.answers,
             },
           ],
