@@ -174,7 +174,7 @@ export default {
     ]),
     currentQuestion() {
       // 找出当前题目的内容
-      return this.content.filter((el) => el.itemId === this.currentItemId)
+      return this.content.filter((el) => el.itemId === this.currentItemId).filter((el) => el.content)
     },
     // 是否为完形填空
     isFillup() {
