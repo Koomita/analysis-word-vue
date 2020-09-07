@@ -351,28 +351,37 @@ export default {
         onSuccess, onError, file, onProgress,
       } = options
       const that = this
-      const reader = new FileReader()
-      reader.readAsArrayBuffer(file)
-      reader.onload = async () => {
-        const binary = this.result
-        onProgress()
-        try {
-          const res = await that.$upload('/api/upload/fileUploadByByte.do', {
-            file: binary,
-          })
-          if (res.dataInfo.path) {
-            onSuccess('Ok')
-            this.fileList = [
-              { ...that.fileList[0], url: res.dataInfo.path, status: 'done' },
-            ]
-          } else {
-            const { msg } = res || { res: '网络出错' }
-            that.$message.error(msg)
-            onError(msg)
+      const size = Math.ceil(file.size / 1024 / 1024)
+      if (size > 20) {
+        that.$message.warning('文件过大')
+      } else {
+        const reader = new FileReader()
+        reader.readAsBinaryString(file)
+        reader.onload = async (e) => {
+          const binary = e.target.result
+          try {
+            const res = await that.$post('/api/upload/fileUploadByByte.do', {
+              file: binary,
+            }, {
+              onUploadProgress: (progressEvent) => {
+                const percentNum = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                onProgress({ percent: percentNum })
+              },
+            })
+            if (res.dataInfo.path) {
+              onSuccess('Ok')
+              this.fileList = [
+                { ...that.fileList[0], url: res.dataInfo.path, status: 'done' },
+              ]
+            } else {
+              const { msg } = res || { res: '网络出错' }
+              that.$message.error(msg)
+              onError(msg)
+            }
+          } catch (err) {
+            that.$message.error('请求出错')
+            onError({ err })
           }
-        } catch (err) {
-          that.$message.error('请求出错')
-          onError({ err })
         }
       }
     },
