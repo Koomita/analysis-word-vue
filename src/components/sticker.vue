@@ -96,15 +96,21 @@ export default {
   watch: {
     paperInfo: {
       handler(nv) {
-        this.scores = nv.map((el) => ({
-          ...el,
-          customScore: Boolean(el.customScore),
-          totalScore: el.totalScore || 0,
-          questionList: el.questionList.map((item) => ({
-            ...item,
-            score: item.score || 0,
-          })),
-        }))
+        let no = 1
+        this.scores = nv.map((el) => {
+          const res = {
+            ...el,
+            customScore: Boolean(el.customScore),
+            totalScore: el.totalScore || 0,
+            questionList: el.questionList.map((item, index) => ({
+              ...item,
+              questionNo: no + index,
+              score: item.score || 0,
+            })),
+          }
+          no += el.questionList.length
+          return res
+        })
       },
       deep: true,
       immediate: true,

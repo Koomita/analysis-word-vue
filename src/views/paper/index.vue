@@ -113,7 +113,7 @@ export default {
       type === 'sub' && this.handleSubData(sIndex, tIndex)
     },
     // 第一大题
-    hanldeTestData(index, action) {
+    async hanldeTestData(index, action) {
       const list = this.currentTests
       const prev = this.currentTests[index - 1]
       const current = this.currentTests[index]
@@ -131,6 +131,19 @@ export default {
           list.splice(index, 1)
           break
       }
+      // 调整小题的questionNo
+      let no = 1
+      await list.forEach((element) => {
+        const res = {
+          ...element,
+          questionList: element.questionList.map((item, i) => ({
+            ...item,
+            questionNo: no + i,
+          })),
+        }
+        no += element.questionList.length
+        return res
+      })
       this.handleData(list)
     },
     // 小题
