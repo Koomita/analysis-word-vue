@@ -355,33 +355,28 @@ export default {
       if (size > 20) {
         that.$message.warning('文件过大')
       } else {
-        const reader = new FileReader()
-        reader.readAsBinaryString(file)
-        reader.onload = async (e) => {
-          const binary = e.target.result
-          try {
-            const res = await that.$post('/api/upload/fileUploadByByte.do', {
-              file: binary,
-            }, {
-              onUploadProgress: (progressEvent) => {
-                const percentNum = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                onProgress({ percent: percentNum })
-              },
-            })
-            if (res.dataInfo.path) {
-              onSuccess('Ok')
-              this.fileList = [
-                { ...that.fileList[0], url: res.dataInfo.path, status: 'done' },
-              ]
-            } else {
-              const { msg } = res || { res: '网络出错' }
-              that.$message.error(msg)
-              onError(msg)
-            }
-          } catch (err) {
-            that.$message.error('请求出错')
-            onError({ err })
+        const data = new FormData()
+        data.append('file', file)
+        try {
+          const res = await that.$upload('/api/upload/fileUploadByByte.do', data, {
+            onUploadProgress: (progressEvent) => {
+              const percentNum = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              onProgress({ percent: percentNum })
+            },
+          })
+          if (res.dataInfo.path) {
+            onSuccess('Ok')
+            this.fileList = [
+              { ...that.fileList[0], url: res.dataInfo.path, status: 'done' },
+            ]
+          } else {
+            const { msg } = res || { res: '网络出错' }
+            that.$message.error(msg)
+            onError(msg)
           }
+        } catch (err) {
+          that.$message.error('请求出错')
+          onError({ err })
         }
       }
     },
@@ -389,7 +384,7 @@ export default {
       if (Array.isArray(e)) {
         return e
       }
-      return e && e.fileList
+      return e && e.fileList.slice(-1)
     },
     // 根据教材获取年级信息
     async getGrades(editionId) {
