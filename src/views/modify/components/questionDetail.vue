@@ -263,7 +263,7 @@ export default {
     // 选项
     option() {
       // 只处理选择题1和英语的完形填空5
-      console.log('questionTypeId', this.questionTypeId, this.isFillup)
+      // console.log('questionTypeId', this.questionTypeId, this.isFillup)
       if (!this.questionTypeId || ![1, 5, 8].includes(this.questionTypeId) || (this.questionTypeId === 5 && !this.isFillup)) return []
       if (this.isFillup) {
         // 完形填空选项
@@ -715,11 +715,22 @@ export default {
           } else if (this.option.length && [1, 3].includes(questionTypeId)) {
             // 普通选择题/判断题 传option
             const optionValues = {}
-            await this.option.forEach((el) => {
-              delete values[el.option]
-              Object.assign(optionValues, {
-                [el.option]: el.value,
+            const { option } = this
+            // 把原来content里的options也更新一波
+            const options = this.currentQuestion.filter((el) => el.options && el.options.length)
+            await options.forEach(async (el) => {
+              await el.options.forEach((item) => {
+                item.value = values[item.option]
               })
+            })
+            const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(options)
+            this.updateOptions(futureOption)
+            // 修改option
+            await option.forEach((el) => {
+              Object.assign(optionValues, {
+                [el.option]: values[el.option],
+              })
+              delete values[el.option]
             })
             values.options = JSON.stringify(optionValues)
           }
