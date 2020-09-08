@@ -96,10 +96,11 @@ export default {
       this.updateState({ name: 'currentItemId', value: itemId })
     },
     async upload() {
+      this.updateState({ name: 'loading', value: true })
       const { items, subjectId, teacherId } = this
       await items.forEach(async (el) => {
         const answer = {}
-        const { answers, questionTypeId } = el
+        const { answers, questionTypeId, videoUrl } = el
         /**
          * 选择题（含单选/多选）: 1
           {"0":"A", "1": "C"}
@@ -135,17 +136,26 @@ export default {
           })
         }
         el.answers = JSON.stringify(answer)
+        if (videoUrl && videoUrl.length) {
+          el.videoUrl = videoUrl[0].url
+        }
+        console.log(el.videoUrl)
         delete el.itemId
       })
-      const res = await this.$post('/api/paperupload/upload/ques.do', {
-        subjectId,
-        teacherId,
-        items,
-      })
-      const { data } = res.dataInfo || { data: [] } // 试题id列表
-      if (data.length) {
-        this.updateState({ name: 'testIds', value: data })
-        this.showCompleteModal = true
+      try {
+        const res = await this.$post('/api/paperupload/upload/ques.do', {
+          subjectId,
+          teacherId,
+          items,
+        })
+        this.updateState({ name: 'loading', value: false })
+        const { data } = res.dataInfo || { data: [] } // 试题id列表
+        if (data.length) {
+          this.updateState({ name: 'testIds', value: data })
+          this.showCompleteModal = true
+        }
+      } catch {
+        this.updateState({ name: 'loading', value: false })
       }
     },
     nextStep() {

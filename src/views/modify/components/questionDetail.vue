@@ -151,6 +151,7 @@ export default {
       optionLen: 4, // 选项数
       optionGroup: [], // 分组选择题
       optionLabel,
+      fileUrl: '', // 视频url
     }
   },
   computed: {
@@ -302,6 +303,8 @@ export default {
         this.editionId = item?.bookId || undefined
         this.gradeId = item?.editionId || undefined
         this.cateId = item?.categoryId || undefined
+        this.fileList = item?.videoUrl || []
+        this.fileUrl = this.fileList[0] ? this.fileList[0].url : ''
         if (this.editionId) {
           this.getGrades(this.editionId)
         }
@@ -369,6 +372,7 @@ export default {
             this.fileList = [
               { ...that.fileList[0], url: res.dataInfo.path, status: 'done' },
             ]
+            this.fileUrl = res.dataInfo.path
           } else {
             const { msg } = res || { res: '网络出错' }
             that.$message.error(msg)
@@ -729,8 +733,10 @@ export default {
             })
             values.options = JSON.stringify(optionValues)
           }
+          const { videoUrl } = values
           this.updateItems({
             ...values,
+            videoUrl: videoUrl && videoUrl[0] ? [{ ...videoUrl[0], url: this.fileUrl }] : undefined,
             questionTypeId,
             quesTypeNameId,
             bookId: this.editionId,

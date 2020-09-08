@@ -33,6 +33,7 @@ export default new Vuex.Store({
     items: [], // 最后提交的数据格式
     testIds: [], // 试题id列表
     paperInfo: [], // 试卷内容
+    loading: false, // 全局loading
   },
   mutations: {
     // 修改state万金油
