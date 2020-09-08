@@ -43,7 +43,7 @@ export default {
               label: '错',
               value: 'false',
             },
-          ] : this.options.map((el) => ({ label: el, value: el })),
+          ] : this.optionLabel.slice(0, this.option.length).map((el) => ({ label: el, value: el })),
           props: {
             label: 'label',
             value: 'value',

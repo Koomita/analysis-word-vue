@@ -136,7 +136,6 @@ export default {
   },
   data() {
     return {
-      options: ['A', 'B', 'C', 'D'],
       expend: false,
       form: this.$form.createForm(this, {
         onValuesChange: this.handleChange,
@@ -151,6 +150,7 @@ export default {
       fileList: [], // 上传视频
       optionLen: 4, // 选项数
       optionGroup: [], // 分组选择题
+      optionLabel,
     }
   },
   computed: {
