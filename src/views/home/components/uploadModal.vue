@@ -10,14 +10,16 @@
     @ok="handleSubmit"
     @cancel="$emit('cancel')"
   >
-    <form-field ref="form" :form-options="options" @change="formChange">
-      <template slot="upper-slot">
-        <div v-if="showInfo" class="info">
-          注意：仅支持上传 doc 或 docx 格式文件，且无法解析加密的 word 文档，请勿上传此类文件！
-          <a-icon type="close" @click="toggleInfo" />
-        </div>
-      </template>
-    </form-field>
+    <a-spin :spinning="loading">
+      <form-field ref="form" :form-options="options" @change="formChange">
+        <template slot="upper-slot">
+          <div v-if="showInfo" class="info">
+            注意：仅支持上传 doc 或 docx 格式文件，且无法解析加密的 word 文档，请勿上传此类文件！
+            <a-icon type="close" @click="toggleInfo" />
+          </div>
+        </template>
+      </form-field>
+    </a-spin>
   </a-modal>
 </template>
 <script>
@@ -39,6 +41,7 @@ export default {
       subjects: [],
       fileList: [],
       showInfo: true,
+      loading: false,
     }
   },
   computed: {
@@ -131,6 +134,7 @@ export default {
       })
     },
     async customRequest(options) {
+      this.loading = true
       const {
         onSuccess, onError, file, onProgress,
       } = options
@@ -139,10 +143,12 @@ export default {
       onProgress()
       try {
         const res = await this.$upload('/self/analysis/word/uploadFile', formData)
+        this.loading = false
         onSuccess('Ok')
         this.fileList = [{ ...this.fileList[0], status: 'done' }]
         this.updateState({ name: 'fileInfo', value: res.data || {} })
       } catch (err) {
+        this.loading = false
         console.log('error: ', err)
         onError({ err })
       }
@@ -151,7 +157,7 @@ export default {
       if (Array.isArray(e)) {
         return e
       }
-      return e && e.fileList
+      return e && e.fileList.slice(-1)
     },
     toggleInfo() {
       this.showInfo = !this.showInfo
