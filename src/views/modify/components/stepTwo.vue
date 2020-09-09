@@ -126,6 +126,9 @@ export default {
             const currentDom = parser.parseFromString(answers, 'text/html')
             const list = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((item) => item.textContent)
             ans = list[0] ? list[0].textContent.split('') : []
+          } else if (questionTypeId === 3) {
+            // 判断题
+            ans = [answers]
           } else {
             ans = answers.split('')
           }
@@ -139,7 +142,7 @@ export default {
         if (videoUrl && videoUrl.length) {
           el.videoUrl = videoUrl[0].url
         }
-        console.log(el.videoUrl)
+        // console.log(el.videoUrl)
         delete el.itemId
       })
       try {
