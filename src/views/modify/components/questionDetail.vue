@@ -79,6 +79,12 @@
             </template>
           </template>
         </template>
+        <!-- 选择题但没能分出选项，需要手动添加选项 -->
+        <template v-else-if="questionTypeId === 1 && !option.length">
+          <a-button slot="addBtn" @click="pushOption">
+            <a-icon type="plus" />添加选项
+          </a-button>
+        </template>
         <div slot="para" class="flex-select">
           <a-select v-model="editionId" placeholder="请选择" @change="getGrades">
             <a-select-option
@@ -670,7 +676,8 @@ export default {
       } else {
         // 普通选择题只需要在当前选项行push即可
         const { option } = this
-        if (this.optionSplit) {
+        // 选项分开或者没有选项的
+        if (this.optionSplit || !this.option.length) {
           const {
             itemId, id, anser, type,
           } = this.currentQuestion[0]

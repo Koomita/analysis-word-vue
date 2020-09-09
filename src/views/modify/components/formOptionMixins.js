@@ -166,6 +166,9 @@ export default {
           })
         }
         formOptions = [formOptions[0], ...list, ...formOptions.slice(1)]
+      } else if (this.questionTypeId === 1) {
+        // 没有选项的选择题
+        formOptions = [formOptions[0], { type: 'slot', decorator: ['addBtn'] }, ...formOptions.slice(1)]
       }
       formOptions = formOptions.concat([{
         label: '题类',
