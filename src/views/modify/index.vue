@@ -41,7 +41,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['step', 'fileInfo', 'subjectId', 'content', 'itemIds', 'subjects', 'questionTypes']),
+    ...mapState(['step', 'fileInfo', 'subjectId', 'content', 'itemIds', 'subjects', 'questionTypes', 'subjectName']),
     itemContents() {
       return this.content
         .filter((el) => Boolean(el.itemId))
@@ -76,10 +76,11 @@ export default {
     ...mapMutations(['updateState', 'delItem', 'updateSubjects']),
     async getContent() {
       this.loading = true
-      const { fileInfo, subjectId } = this
+      const { fileInfo, subjectId, subjectName } = this
       const res = (await this.$post('/self/analysis/word/parseWord', {
         ...fileInfo,
         subjectId,
+        subjectName,
       })) || { data: {} }
       const { content, style, subjects } = res.data || {
         content: '',
