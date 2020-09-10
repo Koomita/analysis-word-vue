@@ -100,7 +100,9 @@ export default {
       const { items, subjectId, teacherId } = this
       await items.forEach(async (el) => {
         const answer = {}
-        const { answers, questionTypeId, videoUrl } = el
+        const {
+          answers, questionTypeId, videoUrl,
+        } = el
         /**
          * 选择题（含单选/多选）: 1
           {"0":"A", "1": "C"}

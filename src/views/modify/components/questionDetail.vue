@@ -199,24 +199,32 @@ export default {
       if (item) {
         return item.content
       }
+      const filterNo = (el, index) => {
+        if (index === 0) {
+          const no = /^(\d+)[.、．:：，]+/.exec(el.content.trim())[0]
+          return el.content.replace(no, '')
+        }
+        return el.content
+      }
       // 非选择题、完形填空，全部显示
       if (![1, 5, 8].includes(this.questionTypeId) || (this.questionTypeId === 5 && !this.isFillup)) {
         return this.currentQuestion
-          .map((el) => el.content)
+          .map((el, i) => filterNo(el, i))
           .join('') || ''
       }
       // 完形填空题目，选项在最后一条，内容为表格
       if (this.isFillup) {
         return this.currentQuestion
           .filter((el, i) => i < this.currentQuestion.length - 1)
-          .map((el) => el.content)
+          .map((el, i) => filterNo(el, i))
           .join('')
       }
       // 把有选项的content从题干中筛除再map
+      // 去掉第一行的题号
       return (
         this.currentQuestion
           .filter((el) => !el.options || !el.options.length)
-          .map((el) => el.content)
+          .map((el, i) => filterNo(el, i))
           .join('') || ''
       )
     },
@@ -717,7 +725,13 @@ export default {
               })
             })
             // 选项放入content，即传完整的currentQuestion
-            values.content = this.currentQuestion.map((el) => el.content).join(' ')
+            values.content = this.currentQuestion.map((el, i) => {
+              if (i === 0) {
+                const no = /^(\d+)[.、．:：，]+/.exec(el.content.trim()) ? /^(\d+)[.、．:：，]+/.exec(el.content.trim())[0] : ''
+                return el.content.replace(no, '')
+              }
+              return el.content
+            }).join(' ')
           } else if (this.option.length && [1, 3].includes(questionTypeId)) {
             // 普通选择题/判断题 传option
             const optionValues = {}
