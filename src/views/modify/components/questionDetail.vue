@@ -295,6 +295,24 @@ export default {
       if (multiple) {
         return this.optionGroup
       }
+      let { options } = this.currentItem
+      options = JSON.parse(options || '{}')
+      // 检查option中间有无断层
+      for (let i = 0; i < option.length; i += 1) {
+        const op = option[i].option
+        const { value } = option[i]
+        if (op !== optionLabel[i]) {
+          // 在前面塞
+          const index = optionLabel.findIndex((el) => el === op)
+          const middle = optionLabel.slice(i, index)
+          for (let j = 0; j < middle.length + 1; j += 1) {
+            const opt = j === middle.length ? op : middle[j]
+            // 更新修改后的内容
+            const val = j === middle.length ? options[opt] || value : options[opt]
+            option[i + j] = { option: opt, value: val }
+          }
+        }
+      }
       return option
     },
     // 是否为选项分组的选择题

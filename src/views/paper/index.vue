@@ -35,9 +35,9 @@
 </template>
 <script>
 import { mapActions, mapMutations, mapState } from 'vuex'
-import icon1 from '@/assets/trash.png'
-import icon2 from '@/assets/down.png'
-import icon3 from '@/assets/up.png'
+import icon1 from '@/assets/trash@2x.png'
+import icon2 from '@/assets/down@2x.png'
+import icon3 from '@/assets/up@2x.png'
 
 const nums = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
 
