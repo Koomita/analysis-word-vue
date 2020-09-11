@@ -28,13 +28,15 @@ export const formatTableOptions = (text) => {
   let val = ''
   // 匹配题号
   do {
-    val = /（\d+）[^（）]+/.exec(text) ? /（\d+）[^（）]+/.exec(text)[0] : ''
-    options.push(val)
+    const noReg = new RegExp(/[（|(]\d+[)|）]([^（）]|[^()])+/)
+    val = noReg.exec(text) ? noReg.exec(text)[0] : ''
+    val && options.push(val)
     text = text.replace(val, '')
   } while (text && val)
   const option = options.map((el) => {
     let temp = el
-    const answerNo = /（\d+）/.exec(temp) ? /（\d+）/.exec(temp)[0] : ''
+    const noReg = new RegExp(/[(|（]\d+[）|)]/)
+    const answerNo = noReg.exec(temp) ? noReg.exec(temp)[0] : ''
     temp = temp.replace(answerNo, '')
     const opts = []
     const reg = new RegExp(/[A-Z]．(\S+)/)

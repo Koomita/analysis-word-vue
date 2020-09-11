@@ -169,24 +169,42 @@ export default {
     save() {
       this.$refs.form.form.validateFields(async (err, values) => {
         if (!err) {
-          await this.$post('/api/paperupload/create/paper.do', {
-            ...values,
-            teacherId: this.teacherId,
-            subjectId: this.subjectId,
-            paragraphList: this.paperInfo.map((el) => {
-              const { paragraphName, paragraphNo, questionList } = el
-              return {
-                paragraphName: `${paragraphNo}、${paragraphName}`,
-                questionList: questionList.map((item) => ({
+          let flag = false
+          const paragraphList = []
+          await this.paperInfo.forEach(async (el) => {
+            const { paragraphName, paragraphNo, questionList } = el
+            const newQuestionList = []
+            await questionList.forEach((item) => {
+              if (item.score) {
+                newQuestionList.push({
                   questionId: item.id,
                   questionNo: item.questionNo,
                   score: item.score,
-                })),
+                })
               }
-            }),
+            })
+            if (newQuestionList.length === questionList.length) {
+              paragraphList.push({
+                paragraphName: `${paragraphNo}、${paragraphName}`,
+                questionList: newQuestionList,
+              })
+            } else {
+              flag = true
+            }
           })
-          this.$message.success('生成试卷成功')
-          this.$router.replace('/')
+          if (!flag) {
+            const data = {
+              ...values,
+              teacherId: this.teacherId,
+              subjectId: this.subjectId,
+              paragraphList,
+            }
+            await this.$post('/api/paperupload/create/paper.do', data)
+            this.$message.success('生成试卷成功')
+            this.$router.replace('/')
+          } else {
+            this.$message.warning('有试题未设置分值')
+          }
         }
       })
     },
