@@ -73,7 +73,7 @@ export default {
     this.getContent()
   },
   methods: {
-    ...mapMutations(['updateState', 'delItem', 'updateSubjects']),
+    ...mapMutations(['updateState', 'delItem', 'updateSubjects', 'updateContent']),
     async getContent() {
       this.loading = true
       const { fileInfo, subjectId, subjectName } = this
@@ -147,18 +147,47 @@ export default {
       const { detail } = this.formatContent()
       this.value = detail
     },
-    change(val) {
-      this.value = val
-    },
-    saveblock(content, nodes) {
-      // 保存题块
+    revertContent(val) {
+      // 把字符串变为数组
       const parser = new DOMParser()
-      const currentDom = parser.parseFromString(content, 'text/html')
+      const currentDom = parser.parseFromString(val, 'text/html')
       const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
       const contents = currentContent.filter((el) => el.nodeName !== '#text').filter((el) => !['u', 'img'].includes(el.localName)).map((el) => ({
         content: el.localName === 'table' ? `<table>${el.innerHTML}</table>` : el.innerHTML,
         contentId: el.dataset.contentid,
       }))
+      return contents
+    },
+    change(val) {
+      this.value = val
+      const itemIds = []
+      const contentIds = []
+      const contents = this.revertContent(val).map((el) => {
+        const itemIndex = this.content.findIndex((item) => item.contentId === el.contentId)
+        const item = this.content[itemIndex] || {}
+        let { contentId, itemId } = item
+        if (itemIds.includes(itemId) && contentIds.includes(contentId)) {
+          contentId = v4()
+          itemId = v4()
+        }
+        !itemIds.includes(itemId) && itemIds.push(itemId)
+        !contentIds.includes(contentId) && contentIds.push(contentId)
+        return {
+          ...item,
+          ...el,
+          contentId,
+          itemId,
+        }
+      })
+      this.updateState({
+        name: 'content',
+        value: contents,
+      })
+      this.updateValue()
+    },
+    saveblock(content, nodes) {
+      // 保存题块
+      const contents = this.revertContent(content)
       if (!contents.length) {
         contents.push({
           content: nodes.innerHTML,
@@ -169,11 +198,12 @@ export default {
       // 显示弹窗选择题型
       this.showModal = true
     },
-    addQuestion({ questionTypeId, id }) {
+    async addQuestion({ questionTypeId, id }) {
       // 更新题块
       const index = this.content.findIndex((el) => el.contentId === this.items[0].contentId)
       // 生成新的itemId
       const itemId = v4()
+      // console.log('new itemId', itemId)
       const newItems = this.items.map((el, i) => ({
         ...this.content[index + i],
         ...el,
@@ -181,14 +211,9 @@ export default {
         id,
         questionTypeId,
       }))
-      this.updateState({
-        name: 'content',
-        value: [...this.content.slice(0, index), ...newItems, ...this.content.slice(index + newItems.length)],
-      })
-      // 更新itemId
-      this.updateState({
-        name: 'itemIds',
-        value: this.itemIds.concat(itemId),
+      this.updateContent({
+        content: [...this.content.slice(0, index), ...newItems, ...this.content.slice(index + newItems.length)],
+        newItemId: itemId,
       })
       const { subjects } = this
       const subjectIndex = subjects.findIndex((el) => el.id === id)

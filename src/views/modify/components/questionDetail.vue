@@ -201,7 +201,7 @@ export default {
       }
       const filterNo = (el, index) => {
         if (index === 0) {
-          const no = /^(\d+)[.、．:：，]+/.exec(el.content.trim())[0]
+          const no = /^(\d+)[.、．:：，]+/.exec(el.content.trim()) ? /^(\d+)[.、．:：，]+/.exec(el.content.trim())[0] : ''
           return el.content.replace(no, '')
         }
         return el.content

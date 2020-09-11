@@ -103,6 +103,23 @@ export default new Vuex.Store({
       const subIndex = state.subjects.findIndex((el) => `${el.id}` === `${id}`)
       state.subjects.splice(subIndex, 1)
     },
+    // 更新题块后更新itemId顺序
+    updateContent(state, { content, newItemId }) {
+      state.content = content
+      const itemIds = []
+      for (let i = 0; i < content.length; i += 1) {
+        const el = content[i]
+        const { itemId } = el
+        if (itemId && state.itemIds.includes(itemId) && !itemIds.includes(itemId)) {
+          // console.log('...dwefweg', itemId)
+          itemIds.push(itemId)
+        } else if (itemId && newItemId === itemId && !itemIds.includes(itemId)) {
+          // console.log('新的', itemId)
+          itemIds.push(itemId)
+        }
+      }
+      state.itemIds = itemIds
+    },
   },
   actions: {
     // 获取全部题类
