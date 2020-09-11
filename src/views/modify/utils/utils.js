@@ -25,21 +25,23 @@ export const formatTableString = (tableData) => {
 export const formatTableOptions = (text) => {
   if (!text) return []
   const options = []
+  let val = ''
   // 匹配题号
   do {
-    const value = /（\d+）[^（）]+/.exec(text)[0]
-    options.push(value)
-    text = text.replace(value, '')
-  } while (text)
+    val = /（\d+）[^（）]+/.exec(text) ? /（\d+）[^（）]+/.exec(text)[0] : ''
+    options.push(val)
+    text = text.replace(val, '')
+  } while (text && val)
   const option = options.map((el) => {
     let temp = el
-    const answerNo = /（\d+）/.exec(temp)[0]
+    const answerNo = /（\d+）/.exec(temp) ? /（\d+）/.exec(temp)[0] : ''
     temp = temp.replace(answerNo, '')
     const opts = []
     const reg = new RegExp(/[A-Z]．(\S+)/)
     do {
-      const value = temp.match(reg)[1]
-      const opt = temp.match(reg)[0].replace(`．${value}`, '')
+      const res = temp.match(reg) || []
+      const value = res[1] || ''
+      const opt = (res[0] || '').replace(`．${value}`, '')
       opts.push({
         option: opt,
         value,
