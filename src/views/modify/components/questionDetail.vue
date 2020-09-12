@@ -285,6 +285,7 @@ export default {
         const answers = this.currentQuestion[this.currentQuestion.length - 1]
         const { text } = answers
         const option = formatTableOptions(text)
+        console.log(option)
         return option
       }
       const option = this.currentQuestion

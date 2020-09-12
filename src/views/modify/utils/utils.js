@@ -28,16 +28,16 @@ export const formatTableOptions = (text) => {
   let val = ''
   // 匹配题号
   do {
-    const noReg = new RegExp(/[（|(]\d+[)|）]([^（）]|[^()])+/)
+    const noReg = new RegExp(/[（|(]\d+[)|）].[^((|（)]+/)
     val = noReg.exec(text) ? noReg.exec(text)[0] : ''
     val && options.push(val)
-    text = text.replace(val, '')
+    text = text.replace(val, '').trim()
   } while (text && val)
   const option = options.map((el) => {
-    let temp = el
+    let temp = el.trim()
     const noReg = new RegExp(/[(|（]\d+[）|)]/)
     const answerNo = noReg.exec(temp) ? noReg.exec(temp)[0] : ''
-    temp = temp.replace(answerNo, '')
+    temp = temp.replace(answerNo, '').trim()
     const opts = []
     const reg = new RegExp(/[A-Z]．(\S+)/)
     do {
@@ -48,7 +48,7 @@ export const formatTableOptions = (text) => {
         option: opt,
         value,
       })
-      temp = temp.trim().replace(`${opt}．${value}`, '')
+      temp = temp.replace(`${opt}．${value}`, '').trim()
     } while (temp.match(reg))
     return {
       answerNo,
