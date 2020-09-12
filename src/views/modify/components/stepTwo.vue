@@ -117,7 +117,7 @@ export default {
           // 多选
           await answers.forEach((item, index) => {
             Object.assign(answer, {
-              [index]: item,
+              [index]: item.toUpperCase(),
             })
           })
         } else if ([1, 3, 5].includes(questionTypeId)) {
@@ -136,7 +136,7 @@ export default {
           }
           await ans.forEach((item, index) => {
             Object.assign(answer, {
-              [index]: item,
+              [index]: ![1, 5].includes(questionTypeId) ? item : item.toUpperCase(),
             })
           })
         }
