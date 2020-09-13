@@ -151,12 +151,17 @@ export default {
       // 把字符串变为数组
       const parser = new DOMParser()
       const currentDom = parser.parseFromString(val, 'text/html')
-      const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
-      const contents = currentContent.filter((el) => el.nodeName !== '#text').filter((el) => !['u', 'img'].includes(el.localName)).map((el) => ({
+      const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((el) => el.nodeName !== '#text')
+      const contents = currentContent.map((el) => ({
         content: el.localName === 'table' ? `<table>${el.innerHTML}</table>` : el.innerHTML,
         contentId: el.dataset.contentid,
       }))
-      return contents
+      let hasContentId = true
+      contents.every((el) => {
+        hasContentId = Boolean(el.contentId)
+        return hasContentId
+      })
+      return hasContentId ? contents : []
     },
     change(val) {
       this.value = val
