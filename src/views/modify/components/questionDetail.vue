@@ -475,11 +475,12 @@ export default {
         onOk: async () => {
           this.loading = true
           const option = JSON.parse(JSON.stringify(this.option))
+          // 删除完小题，当前题目设置答案状态为false
           if (this.isFillup) {
             // 删除完形填空小题
             option.splice(index, 1)
             const { table, text } = formatTableString(option)
-            this.updateTable(table, text)
+            this.updateTable(table, text, false)
           } else if (this.isOptionGroup) {
             // 删除分组小题，直接删除
             const contentOptions = this.currentContent.filter((el) => el.options && el.options.length)
@@ -489,13 +490,33 @@ export default {
               actualIndex += i === index ? 0 : el.options.length
             })
             contentOptions.splice(actualIndex, option[index].options.length)
-            const futureOption = this.currentQuestion.filter((el) => !el.option || !el.options.length).concat(contentOptions)
+            const futureOption = this.currentQuestion.filter((el) => !el.option || !el.options.length).concat(contentOptions).map((el) => ({ ...el, anser: false }))
             this.updateOptions(futureOption)
           }
+          // 清空原来设置的答案
+          this.clearAnswer()
         },
       })
     },
-    updateTable(table, text) {
+    clearAnswer() {
+      const itemIndex = this.items.findIndex((el) => el.itemId === this.currentItemId)
+      console.log(itemIndex, this.items)
+      if (itemIndex > -1) {
+        this.updateState({
+          name: 'items',
+          value: [
+            ...this.items.slice(0, itemIndex),
+            {
+              ...this.items[itemIndex],
+              anser: false,
+              answers: '',
+            },
+            ...this.items.slice(itemIndex + 1),
+          ],
+        })
+      }
+    },
+    updateTable(table, text, answer) {
       const index = this.content.findIndex(
         (el) => el.itemId === this.currentItemId,
       )
@@ -507,6 +528,7 @@ export default {
           ...this.currentQuestion[this.currentQuestion.length - 1],
           content: table,
           text,
+          anser: answer === false ? false : this.currentQuestion[this.currentQuestion.length - 1].anser,
         },
       ]
       this.updateState({
@@ -562,6 +584,7 @@ export default {
       })
       const { table, text } = formatTableString(option)
       this.updateTable(table, text)
+      direction === 'del' && this.clearAnswer()
     },
     async move(direction, optionIndex, queIndex) {
       const num = {
@@ -676,6 +699,7 @@ export default {
       })
       const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(contentOptions)
       this.updateOptions(futureOption)
+      direction === 'del' && this.clearAnswer()
     },
     moveDown(optionIndex, queIndex) {
       !this.isFillup && this.move('down', optionIndex, queIndex)
