@@ -87,7 +87,7 @@ export default {
         style: '',
       }
       this.updateState({ name: 'subjects', value: subjects })
-      this.updateState({ name: 'content', value: content.filter((el) => el.content) })
+      this.updateState({ name: 'content', value: content ? content.filter((el) => el.content) : [] })
       this.updateState({ name: 'items', value: [] })
       this.appendStyleTag(style)
       this.loading = false

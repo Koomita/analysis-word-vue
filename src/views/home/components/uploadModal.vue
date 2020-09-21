@@ -35,6 +35,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    accept: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
@@ -68,7 +72,7 @@ export default {
           initialValue: this.fileList,
         }],
         customRequest: this.customRequest,
-        accept: '.doc,.docx,.pdf,.png',
+        accept: this.accept,
       }, {
         label: '学科',
         type: 'select',

@@ -2,14 +2,18 @@
   <div class="home">
     <main-frame>
       <div slot="content" class="home-content">
-        <div class="block" @click="toggle">
+        <div class="block" @click="toggle('doc')">
           <a-icon type="cloud-upload" />上传试卷
+        </div>
+        <div class="block" @click="toggle('pdf')">
+          <a-icon type="cloud-upload" />图片识别
         </div>
       </div>
       <!-- <div slot="action" class="home-action"></div> -->
     </main-frame>
     <upload-modal
       :visible.sync="modalVisible"
+      :accept="accept"
       @submit="handleSubmit"
       @cancel="handleCancel" />
   </div>
@@ -30,6 +34,7 @@ export default {
   data() {
     return {
       modalVisible: false,
+      accept: '.doc,.docx',
     }
   },
   mounted() {
@@ -44,7 +49,16 @@ export default {
   },
   methods: {
     ...mapMutations(['updateState']),
-    toggle() {
+    toggle(type) {
+      switch (type) {
+        case 'pdf':
+          this.accept = '.pdf,image/*'
+          break
+        case 'doc':
+        default:
+          this.accept = '.doc,.docx'
+          break
+      }
       this.modalVisible = true
     },
     handleSubmit(values) {
@@ -79,6 +93,7 @@ export default {
       display: flex;
       justify-content: center;
       align-items: center;
+      margin-bottom: 20px;
       &::after {
         position: absolute;
         top: 0;
