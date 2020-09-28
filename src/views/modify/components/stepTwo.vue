@@ -16,8 +16,8 @@
         <p class="flex-item">
           <span
            v-for="(num, numIndex) in que.number"
-           :key="`${que.id}-${num}`"
-           :class="['block', !que.answer[numIndex] ? 'error': '', checkActive(que, numIndex) ? 'active' : '']"
+           :key="`${que.classifyId}-${num}`"
+           :class="['block', !que.answer[numIndex].anser ? 'error': '', checkActive(que, numIndex) ? 'active' : '']"
            @click="changeCurrentQuestion(que.itemId[numIndex])"
           >
             {{ num }}
@@ -46,18 +46,14 @@ export default {
   },
   computed: {
     ...mapState(['questionTypes', 'itemIds', 'content', 'currentItemId', 'items', 'subjectId', 'teacherId', 'subjects']),
-    questions() {
-      if (!this.content || !this.content.length || !this.itemIds || !this.itemIds.length) return []
-      return this.content.filter((el) => this.itemIds.includes(el.itemId))
-    },
     currentQuestions() {
       const list = []
-      if (this.subjects.length && this.itemIds.length && this.content.length) {
+      if (this.subjects.length && this.itemIds.length && this.items.length) {
         this.itemIds.forEach((el, i) => {
-          const target = this.questions.filter((item) => item.itemId === el)
+          const target = this.items.filter((item) => item.itemId === el)
           if (target.length) {
-            const { id, anser } = target[0]
-            const index = list.findIndex((item) => `${item.id}` === `${id}`)
+            const { id, anser, classifyId } = target[0]
+            const index = list.findIndex((item) => `${item.classifyId}` === `${classifyId}`)
             // console.log(id)
             if (index < 0) {
               const questionType = this.subjects.find((obj) => `${obj.id}` === `${id}`)
@@ -69,6 +65,7 @@ export default {
                 answer: [anser],
                 id,
                 questionTypeName: questionType?.subjectTitle || subjectType?.name,
+                classifyId,
               })
             } else {
               list[index].number.push(`${i + 1}`)
@@ -82,7 +79,12 @@ export default {
       return list
     },
     btnDisabled() {
-      return this.items.length !== this.itemIds.length
+      let savedNums = 0
+      this.items.filter((el) => el.anser).reduce(() => {
+        savedNums += 1
+        return true
+      }, 0)
+      return savedNums !== this.itemIds.length
     },
   },
   methods: {
@@ -98,10 +100,17 @@ export default {
     async upload() {
       this.updateState({ name: 'loading', value: true })
       const { items, subjectId, teacherId } = this
-      await items.forEach(async (el) => {
+      const itemList = items.map(async (el) => {
         const answer = {}
+        let { answers, videoUrl, options } = el
         const {
-          answers, questionTypeId, videoUrl,
+          quesTypeNameId, questionClassId, sourceId,
+          difficultyCoefficient, pointIds, bookId,
+          categoryId, editionId, content, analysis,
+          explanation, comment, dimensionPointIds,
+          dimensionCapabilityIds,
+          dimensionAttainmentIds,
+          dimensionCoreValueIds, questionTypeId,
         } = el
         /**
          * 选择题（含单选/多选）: 1
@@ -140,18 +149,39 @@ export default {
             })
           })
         }
-        el.answers = JSON.stringify(answer)
+        answers = JSON.stringify(answer)
+        options = JSON.stringify(options)
         if (videoUrl && videoUrl.length) {
-          el.videoUrl = videoUrl[0].url
+          videoUrl = videoUrl[0].url
         }
-        // console.log(el.videoUrl)
-        delete el.itemId
+        return {
+          answers,
+          questionTypeId,
+          videoUrl,
+          options,
+          quesTypeNameId,
+          questionClassId,
+          sourceId,
+          difficultyCoefficient,
+          pointIds,
+          bookId,
+          categoryId,
+          editionId,
+          content,
+          analysis,
+          explanation,
+          comment,
+          dimensionPointIds,
+          dimensionCapabilityIds,
+          dimensionAttainmentIds,
+          dimensionCoreValueIds,
+        }
       })
       try {
         const res = await this.$post('/api/paperupload/upload/ques.do', {
           subjectId,
           teacherId,
-          items,
+          items: itemList,
         })
         this.updateState({ name: 'loading', value: false })
         const { data } = res.dataInfo || { data: [] } // 试题id列表

@@ -34,18 +34,32 @@ export default {
       style: '',
       loading: false,
       value: '',
-      init: false,
       editorHeight: document.body.offsetHeight - 150,
       items: [], // 保存的新题块
       showModal: false,
     }
   },
   computed: {
-    ...mapState(['step', 'fileInfo', 'subjectId', 'content', 'itemIds', 'subjects', 'questionTypes', 'subjectName']),
+    ...mapState([
+      'step',
+      'fileInfo',
+      'subjectId',
+      'content',
+      'itemIds',
+      'subjects',
+      'questionTypes',
+      'subjectName',
+    ]),
     itemContents() {
       return this.content
         .filter((el) => Boolean(el.itemId))
         .map((el) => el.itemId)
+    },
+    savedItems() {
+      return this.$store.state.items
+    },
+    init() {
+      return this.savedItems.length > 0 || this.itemIds.length > 0
     },
   },
   watch: {
@@ -68,9 +82,12 @@ export default {
     },
   },
   created() {
-    this.init = false
     this.updateState({ name: 'step', value: 0 })
-    this.getContent()
+    if (!this.init) {
+      this.getContent()
+    } else {
+      this.updateValue()
+    }
   },
   methods: {
     ...mapMutations(['updateState', 'delItem', 'updateSubjects', 'updateContent']),
@@ -88,7 +105,6 @@ export default {
       }
       this.updateState({ name: 'subjects', value: subjects })
       this.updateState({ name: 'content', value: content ? content.filter((el) => el.content) : [] })
-      this.updateState({ name: 'items', value: [] })
       this.appendStyleTag(style)
       this.loading = false
     },
@@ -111,6 +127,7 @@ export default {
     },
     formatContent() {
       const itemIds = []
+      const contentIds = []
       let detail = ''
       if (this.content.length) {
         this.content.forEach((el) => {
@@ -121,15 +138,18 @@ export default {
           const arr = this.init ? this.itemIds : this.itemContents
           const paraIndex = arr.findIndex((item) => item === itemId)
           content = content.indexOf('<table') > -1 ? `${content.replace('<table', `<table data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"`)}` : content
-          if (paraIndex > -1) {
-            if (!itemIds.includes(itemId)) {
-              itemIds.push(itemId)
-              detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}">&nbsp;</span>${content}</p>`
+          if (!contentIds.includes(contentId)) {
+            contentIds.push(contentId)
+            if (paraIndex > -1) {
+              if (!itemIds.includes(itemId)) {
+                itemIds.push(itemId)
+                detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}">&nbsp;</span>${content}</p>`
+              } else {
+                detail += `<p class="question-block" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
+              }
             } else {
-              detail += `<p class="question-block data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
+              detail += `<p data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
             }
-          } else {
-            detail += `<p data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
           }
         })
       }
@@ -140,7 +160,6 @@ export default {
       const { detail, itemIds } = this.formatContent()
       this.updateState({ name: 'itemIds', value: itemIds })
       this.value = detail
-      this.init = true
     },
     updateValue() {
       // 更新数据

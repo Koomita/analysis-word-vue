@@ -10,7 +10,7 @@
 </template>
 <style lang="less" scoped>
 .frame {
-  width: 100%;
+  width: 1184px;
   min-height: 100%;
   display: flex;
   justify-content: space-between;

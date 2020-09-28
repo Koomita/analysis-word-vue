@@ -42,9 +42,13 @@ export default new Vuex.Store({
     },
     // 删除题块
     delItem(state, { itemId, id }) {
-      // console.log(itemId, state.itemIds.findIndex((el) => el === itemId))
+      // return console.log(itemId, state.itemIds.findIndex((el) => el === itemId))
       const index = state.itemIds.findIndex((el) => el === itemId)
       state.itemIds.splice(index, 1)
+      const itemIndex = state.items.findIndex((el) => el.itemId === itemId)
+      if (itemIndex > -1) {
+        state.items.splice(itemIndex, 1)
+      }
       // 同时subjects对应题量-1
       const i = state.subjects.findIndex((el) => `${el.id}` === `${id}`)
       const subject = state.subjects[i]
@@ -80,7 +84,7 @@ export default new Vuex.Store({
           state.items.push({ itemId: currentItemId, ...item })
         }
         // 再把content里面的anser字段改为true
-        console.log(state.items)
+        // console.log(state.items)
         state.content.forEach((el) => {
           if (el.itemId) {
             el.anser = state.items.findIndex((obj) => obj.itemId === el.itemId) > -1
@@ -91,7 +95,7 @@ export default new Vuex.Store({
     },
     // 删除题型
     delQuestionType(state, id) {
-      console.log(id)
+      // console.log(id)
       const tmp = new Map()
       const contents = state.content.filter((el) => state.itemIds.includes(el.itemId)).filter((el) => `${el.id}` === `${id}`).map((el) => el.itemId).filter((item) => !tmp.has(item) && tmp.set(item, 1))
       contents.forEach((el) => {

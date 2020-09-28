@@ -37,7 +37,7 @@ export default {
       background: #fff;
     }
     .ant-layout-content {
-      width: 1184px;
+      width: 100%;
       margin: 16px auto 0;
       flex: 1;
       overflow: hidden;
