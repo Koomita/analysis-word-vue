@@ -41,6 +41,8 @@ export default {
       margin: 16px auto 0;
       flex: 1;
       overflow: hidden;
+      display: flex;
+      justify-content: center;
     }
   }
 }
