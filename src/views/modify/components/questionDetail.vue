@@ -614,20 +614,23 @@ export default {
             // 检查当前content有无选项
             const hasOption = reg.exec(content)
             if (hasOption) {
-            // 检查有几个选项，要注意选项是否调整了顺序，以及内容是否改变
+              // 检查有几个选项，要注意选项是否调整了顺序，以及内容是否改变
               let newContent = ''
               let otherOption = hasOption
               do {
+                newContent += `${optionLabel[num]}. ${this.editingItem.options[optionLabel[num]]} `
                 const rest = otherOption.input.replace(otherOption[0], '')
                 otherOption = reg.exec(rest)
                 if (otherOption) {
-                  newContent += `${optionLabel[num]}.${this.editingItem.options[optionLabel[num]]} `
                   content = rest.split(otherOption[0])[1] || ''
-                } else {
-                  newContent = `${optionLabel[num]}.${this.editingItem.options[optionLabel[num]]}`
+                  if (content) {
+                    content = `${otherOption[0]}${content}`
+                  }
+                  console.log(otherOption, newContent)
                 }
                 num += 1
               } while (otherOption && this.editingItem.options[optionLabel[num]])
+              // console.log('do while结束', newContent)
               content = newContent
             }
           }

@@ -17,7 +17,7 @@
           <span
            v-for="(num, numIndex) in que.number"
            :key="`${que.classifyId}-${num}`"
-           :class="['block', !que.answer[numIndex].anser ? 'error': '', checkActive(que, numIndex) ? 'active' : '']"
+           :class="['block', !que.answer[numIndex] ? 'error': '', checkActive(que, numIndex) ? 'active' : '']"
            @click="changeCurrentQuestion(que.itemId[numIndex])"
           >
             {{ num }}

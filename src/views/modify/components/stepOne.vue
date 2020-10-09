@@ -174,7 +174,7 @@ export default {
           const no = test[0]
           if (!items.find((item) => item.itemId === itemId)) {
             const storedItem = this.items.find((item) => item.itemId === itemId)
-            finalContent += content.replace(no, '')
+            finalContent = content.replace(no, '')
             items.push({
               ...storedItem,
               content: finalContent,
