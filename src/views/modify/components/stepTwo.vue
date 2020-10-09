@@ -100,10 +100,16 @@ export default {
     async upload() {
       this.updateState({ name: 'loading', value: true })
       const { items, subjectId, teacherId } = this
+      const values = []
       await items.forEach(async (el) => {
         const answer = {}
         const {
-          answers, questionTypeId, videoUrl,
+          answers, questionTypeId, videoUrl, quesTypeNameId,
+          questionClassId, sourceId, difficultyCoefficient,
+          pointIds, bookId, categoryId, editionId, content,
+          options, analysis, explanation, comment,
+          dimensionPointIds, dimensionCapabilityIds,
+          dimensionAttainmentIds, dimensionCoreValueIds,
         } = el
         /**
          * 选择题（含单选/多选）: 1
@@ -142,18 +148,34 @@ export default {
             })
           })
         }
-        el.answers = JSON.stringify(answer)
-        if (videoUrl && videoUrl.length) {
-          el.videoUrl = videoUrl[0].url
-        }
-        // console.log(el.videoUrl)
-        delete el.itemId
+        values.push({
+          answers: JSON.stringify(answer),
+          videoUrl: (videoUrl && videoUrl.length && videoUrl[0].url) || '',
+          questionTypeId,
+          quesTypeNameId,
+          questionClassId,
+          sourceId,
+          difficultyCoefficient,
+          pointIds,
+          bookId,
+          categoryId,
+          editionId,
+          content,
+          options,
+          analysis,
+          explanation,
+          comment,
+          dimensionPointIds,
+          dimensionCapabilityIds,
+          dimensionAttainmentIds,
+          dimensionCoreValueIds,
+        })
       })
       try {
         const res = await this.$post('/api/paperupload/upload/ques.do', {
           subjectId,
           teacherId,
-          items,
+          items: values,
         })
         this.updateState({ name: 'loading', value: false })
         const { data } = res.dataInfo || { data: [] } // 试题id列表
