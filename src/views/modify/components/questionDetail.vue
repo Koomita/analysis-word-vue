@@ -675,7 +675,7 @@ export default {
         el.content = str
       })
       const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(contentOptions)
-      this.updateOptions(futureOption)
+      this.updateOptions(direction === 'del' ? futureOption.map((el) => ({ ...el, anser: false })) : futureOption)
     },
     moveDown(optionIndex, queIndex) {
       !this.isFillup && this.move('down', optionIndex, queIndex)
