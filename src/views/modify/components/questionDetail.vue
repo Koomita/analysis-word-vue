@@ -113,7 +113,6 @@
   </div>
 </template>
 <script>
-import { v4 } from 'uuid'
 import { mapState, mapActions, mapMutations } from 'vuex'
 import icon1 from '@/assets/trash@2x.png'
 import icon2 from '@/assets/down@2x.png'
