@@ -202,7 +202,6 @@ export default {
       const itemIds = []
       const contentIds = []
       const contents = this.revertContent(val).map((el) => {
-        console.log(el)
         const itemIndex = this.content.findIndex((item) => item.contentId === el.contentId)
         const item = this.content[itemIndex] || {}
         let { contentId, itemId } = item
@@ -223,7 +222,6 @@ export default {
         name: 'content',
         value: contents,
       })
-      // this.value = val
       this.updateValue()
     },
     saveblock(content, nodes) {

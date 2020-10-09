@@ -101,9 +101,12 @@ export default {
     ...mapMutations(['updateState', 'delQuestionType', 'updateSubjects']),
     ...mapActions(['getQuestionTypes', 'getQuestionClasses']),
     checkOptions(content) {
-      const reg = new RegExp(/[A-Z]．(\S+)/)
+      const isEng = [7, 16, 21].includes(this.subjectId)
+      const engReg = new RegExp(/^[A-Z]{1}[.、．:：]+/) // 英语题用
+      const otherReg = new RegExp(/[A-Z]{1}[.、．:：]+/) // 非英语题用
+      const reg = isEng ? engReg : otherReg
       const result = reg.exec(content)
-      return result ? result[0] : false
+      return result ? result[0] : content.startsWith('<table')
     },
     getOptions(content) {
       const isEng = [7, 16, 21].includes(this.subjectId)
@@ -129,7 +132,7 @@ export default {
           // res为选项内容
           let res = result.input.replace(result[0], '').trim()
           // 检查剩余内容是否还包含其他选项
-          const includeOtherOption = reg.exec(res)
+          const includeOtherOption = otherReg.exec(res)
           if (includeOtherOption) {
             // 如果有，重新赋值选项内容
             const current = res.split(includeOtherOption[0])
@@ -184,7 +187,7 @@ export default {
               questionTypeId: storedItem?.questionTypeId || questionTypeId,
               itemId,
               classifyId,
-              contentId: [contentId], // 后面设置答案时，更新content数组有用
+              contentIds: [contentId], // 后面设置答案时，更新content数组有用
             })
           } else {
             const index = items.findIndex((item) => item.itemId === itemId)
@@ -202,13 +205,12 @@ export default {
             items.splice(index, 1, {
               ...items[index],
               options: opt,
-              contentId: contentId ? contentId.concat([contentId]) : contentIds,
+              contentIds: contentId ? contentIds.concat([contentId]) : contentIds,
               content: finalContent,
             })
           }
         }
       })
-      // return console.log(items)
       // 默认编辑第一题题目详情
       this.updateState({ name: 'items', value: items })
       this.updateState({ name: 'currentItemId', value: this.itemIds[0] })

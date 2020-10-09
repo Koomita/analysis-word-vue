@@ -251,13 +251,15 @@ export default {
       for (const [key, value] of Object.entries(options)) {
         if (key !== optionLabel[i]) {
           const len = optionLabel.findIndex((el) => el === key)
-          for (let j = i; j < len; j += 1) {
-            option.push({ option: optionLabel[i], value: key === optionLabel[j] === key ? value : '' })
+          for (let j = 0; j < len; j += 1) {
+            const labelIndex = j + i
+            option.push({ option: optionLabel[labelIndex], value: key === optionLabel[labelIndex] ? value : '' })
           }
+          i += len
         } else {
           option.push({ option: key, value })
+          i += 1
         }
-        i += 1
       }
       return option
     },
@@ -478,7 +480,6 @@ export default {
         options: currentAdjustTr,
       })
       const { table } = formatTableString(option)
-      // console.log(table)
       this.editingItem = {
         ...this.editingItem,
         options: table,
@@ -538,11 +539,24 @@ export default {
       this.isFillup && this.adjustTable('up', optionIndex, queIndex)
     },
     // 添加小题/选项
-    async pushOption() {
+    async pushOption(type) {
       const currentLen = this.option.length
       // 添加小题
       if (this.isFillup) {
-        // 完形填空添加tr
+        if (type === 'optionGroup') {
+          // 添加小题，添加tr
+          const { table } = formatTableString(this.option.concat([{
+            answerNo: this.option.length,
+            options: optionLabel.filter((el, i) => i <= this.optionLen).map((el, i) => ({
+              option: optionLabel[i],
+              value: '',
+            })),
+          }]))
+          this.editingItem = {
+            ...this.editingItem,
+            options: table,
+          }
+        }
       } else {
         // 添加选项
         this.editingItem = {
@@ -554,6 +568,27 @@ export default {
         }
       }
     },
+    // 收集新table内容
+    getTableString(values) {
+      const arr = []
+      for (let i = 0; i < this.option.length; i += 1) {
+        const el = this.option[i]
+        const opts = []
+        const answerNo = `（${i + 1}）`
+        for (let j = 0; j < el.options.length; j += 1) {
+          opts.push({
+            option: optionLabel[j],
+            value: values[`${answerNo}-${optionLabel[j]}`],
+          })
+        }
+        arr.push({
+          answerNo,
+          options: opts,
+        })
+      }
+      const { table } = formatTableString(arr)
+      return table
+    },
     // 保存内容
     save() {
       this.$refs.formField.form.validateFields(async (err, values) => {
@@ -561,6 +596,20 @@ export default {
           // 更新当前items
           const itemIndex = this.items.findIndex((el) => el.itemId === this.currentItemId)
           const { videoUrl } = values
+          let options = {}
+          if (this.option.length) {
+            // 处理选项内容
+            if (!this.isFillup) {
+              await this.option.forEach((el, i) => {
+                Object.assign(options, {
+                  [optionLabel[i]]: values[optionLabel[i]],
+                })
+              })
+            } else {
+              // 完形填空内容，更新表格
+              options = this.getTableString(values)
+            }
+          }
           this.updateState({
             name: 'items',
             value: [
@@ -573,82 +622,83 @@ export default {
                 editionId: this.gradeId,
                 categoryId: this.cateId,
                 anser: true,
+                options,
               },
               ...this.items.slice(itemIndex + 1),
             ],
           })
           // 更新原content数组
-          this.updateContent(values.content)
+          this.updateContent(values)
         }
       })
     },
     // 更新content原数组内容
-    updateContent() {
+    updateContent(values) {
       /**
        * 题干可能是几行content，选项也可能是几行content，Jesus
        * 选择题得区分题干和选项，题干还得处理题号的问题😊
        * items里面存了一个字段，contentId数组，里面是当前item在content数组里对应的contentId们
        */
       const currentQuestion = []
-      const contentIds = []
       const isEng = [7, 16, 21].includes(this.subjectId)
       const engReg = new RegExp(/^[A-Z]{1}[.、．:：]+/) // 英语题用
       const otherReg = new RegExp(/[A-Z]{1}[.、．:：]+/) // 非英语题用
       const reg = isEng ? engReg : otherReg
       let num = 0 // 记录选项数
-      for (let i = 0; i < this.currentQuestion.length; i += 1) {
+      // 题干都放同一个content里，即第一条数据
+      const questionNo = this.itemIds.findIndex((item) => item === this.currentItemId) + 1
+      currentQuestion.push({
+        ...this.currentQuestion[0],
+        content: `${questionNo}. ${this.editingItem.content}`,
+      })
+      // 剩余的内容
+      for (let i = 1; i < this.currentQuestion.length; i += 1) {
         const el = this.currentQuestion[i]
         let { content, text } = el
         content = content.trim()
         const {
           contentId, itemId, id, questionTypeId, classifyId,
         } = el
-        if (!contentIds.includes(contentId)) {
-          contentIds.push(contentId)
-          if (this.isFillup) {
-            // 完形填空的表格处理
-            text = formatTableString(this.option).text
-            content = this.editingItem.options
-          } else if (this.option.length) {
-            // 检查当前content有无选项
-            const hasOption = reg.exec(content)
-            if (hasOption) {
-              // 检查有几个选项，要注意选项是否调整了顺序，以及内容是否改变
-              let newContent = ''
-              let otherOption = hasOption
-              do {
-                newContent += `${optionLabel[num]}. ${this.editingItem.options[optionLabel[num]]} `
-                const rest = otherOption.input.replace(otherOption[0], '')
-                otherOption = reg.exec(rest)
-                if (otherOption) {
-                  content = rest.split(otherOption[0])[1] || ''
-                  if (content) {
-                    content = `${otherOption[0]}${content}`
-                  }
-                  console.log(otherOption, newContent)
+        let flag = false
+        if (this.isFillup && content.startsWith('<table')) {
+          // 完形填空的表格处理
+          text = formatTableString(this.option).text
+          content = this.getTableString(values)
+        } else if (this.option.length) {
+          // 检查当前content有无选项
+          const hasOption = reg.exec(content)
+          if (hasOption) {
+            // 检查有几个选项，要注意选项是否调整了顺序，以及内容是否改变
+            let newContent = ''
+            let otherOption = hasOption
+            do {
+              newContent += `${optionLabel[num]}. ${values[optionLabel[num]]} `
+              const rest = otherOption.input.replace(otherOption[0], '')
+              otherOption = reg.exec(rest)
+              if (otherOption) {
+                content = rest.split(otherOption[0])[1] || ''
+                if (content) {
+                  content = `${otherOption[0]}${content}`
                 }
-                num += 1
-              } while (otherOption && this.editingItem.options[optionLabel[num]])
-              // console.log('do while结束', newContent)
-              content = newContent
-            }
+              }
+              num += 1
+            } while (otherOption && values[optionLabel[num]])
+            content = newContent
+          } else {
+            // 题干部分内容
+            flag = true
           }
-          if (i === 0) {
-            // 题干
-            const questionNo = this.itemIds.findIndex((item) => item === itemId) + 1
-            content = `${questionNo}.${this.editingItem.content}`
-          }
-          currentQuestion.push({
-            ...el,
-            itemId,
-            contentId,
-            content,
-            id,
-            questionTypeId,
-            classifyId,
-            text,
-          })
         }
+        !flag && currentQuestion.push({
+          ...el,
+          itemId,
+          contentId,
+          content,
+          id,
+          questionTypeId,
+          classifyId,
+          text,
+        })
       }
       const start = this.content.findIndex((el) => el.itemId === this.currentItemId)
       this.updateState({
@@ -656,7 +706,7 @@ export default {
         value: [
           ...this.content.slice(0, start),
           ...currentQuestion,
-          ...this.content.slice(start + 1),
+          ...this.content.slice(start + this.currentQuestion.length),
         ],
       })
       this.$message.success('保存成功')

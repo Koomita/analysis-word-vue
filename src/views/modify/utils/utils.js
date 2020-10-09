@@ -22,7 +22,7 @@ export const formatTableString = (tableData) => {
 }
 
 export const formatTableOptions = (text) => {
-  if (!text) return []
+  if (!text || typeof text !== 'string') return []
   const options = []
   let val = 'temp'
   // 匹配tr标签
