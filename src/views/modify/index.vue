@@ -149,7 +149,7 @@ export default {
             if (paraIndex > -1) {
               if (!itemIds.includes(itemId)) {
                 itemIds.push(itemId)
-                detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}">&nbsp;</span>${content}</p>`
+                detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">&nbsp;</span>${content}</p>`
               } else {
                 detail += `<p class="question-block" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
               }
@@ -177,10 +177,20 @@ export default {
       const parser = new DOMParser()
       const currentDom = parser.parseFromString(val, 'text/html')
       const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((el) => el.nodeName !== '#text')
-      const contents = currentContent.map((el) => ({
-        content: el.localName === 'table' ? `<table>${el.innerHTML}</table>` : el.innerHTML,
-        contentId: el.dataset.contentid,
-      }))
+      const contents = currentContent.map((el) => {
+        const { childNodes } = el
+        let { innerHTML } = el
+        const childs = Array.from(childNodes || [])
+        if (childs.length && childs[0].nodeName === 'SPAN' && childs[0].className === 'del-icon') {
+          // 把删除样式的span去掉
+          const cons = childs.filter((item) => item.className !== 'del-icon')
+          innerHTML = cons.map((item) => item.data).join('')
+        }
+        return {
+          content: el.localName === 'table' ? `<table>${innerHTML}</table>` : innerHTML,
+          contentId: el.dataset.contentid,
+        }
+      })
       let hasContentId = true
       contents.every((el) => {
         hasContentId = Boolean(el.contentId)
@@ -189,10 +199,10 @@ export default {
       return hasContentId ? contents : []
     },
     change(val) {
-      this.value = val
       const itemIds = []
       const contentIds = []
       const contents = this.revertContent(val).map((el) => {
+        console.log(el)
         const itemIndex = this.content.findIndex((item) => item.contentId === el.contentId)
         const item = this.content[itemIndex] || {}
         let { contentId, itemId } = item
@@ -213,6 +223,7 @@ export default {
         name: 'content',
         value: contents,
       })
+      // this.value = val
       this.updateValue()
     },
     saveblock(content, nodes) {
