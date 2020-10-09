@@ -37,6 +37,7 @@ export default {
       editorHeight: document.body.offsetHeight - 150,
       items: [], // 保存的新题块
       showModal: false,
+      clearItems: false,
     }
   },
   computed: {
@@ -73,8 +74,13 @@ export default {
       deep: true,
     },
     itemIds: {
-      handler() {
+      handler(nv, ov) {
         if (this.init) {
+          this.clearItems = false
+          this.updateValue()
+        } else if (!nv.length && ov.length) {
+          // 清空题目
+          this.clearItems = true
           this.updateValue()
         }
       },
@@ -135,7 +141,7 @@ export default {
             itemId, id, contentId,
           } = el
           let { content } = el
-          const arr = this.init ? this.itemIds : this.itemContents
+          const arr = this.init || this.clearItems ? this.itemIds : this.itemContents
           const paraIndex = arr.findIndex((item) => item === itemId)
           content = content.indexOf('<table') > -1 ? `${content.replace('<table', `<table data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"`)}` : content
           if (!contentIds.includes(contentId)) {
