@@ -12,7 +12,7 @@
      :data-source="subjects"
      :columns="columns"
      :pagination="false"
-     :row-key="record => record.subjectTitle"
+     :row-key="record => record.classifyId"
     >
       <template slot="action" slot-scope="text, record">
         <a-button type="link" @click="edit(record)">编辑</a-button>

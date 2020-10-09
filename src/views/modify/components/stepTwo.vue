@@ -56,11 +56,12 @@ export default {
         this.itemIds.forEach((el, i) => {
           const target = this.questions.filter((item) => item.itemId === el)
           if (target.length) {
-            const { id, anser } = target[0]
-            const index = list.findIndex((item) => `${item.id}` === `${id}`)
-            // console.log(id)
+            const {
+              id, anser, classifyId, questionTypeId,
+            } = target[0]
+            const index = list.findIndex((item) => `${item.classifyId}` === `${classifyId}`)
             if (index < 0) {
-              const questionType = this.subjects.find((obj) => `${obj.id}` === `${id}`)
+              const questionType = this.subjects.find((obj) => `${obj.questionTypeId}` === `${questionTypeId}`)
               const subjectType = this.questionTypes.find((obj) => `${obj.id}` === `${id}`)
               list.push({
                 itemId: [el],
@@ -68,6 +69,7 @@ export default {
                 questions: [target],
                 answer: [anser],
                 id,
+                classifyId,
                 questionTypeName: questionType?.subjectTitle || subjectType?.name,
               })
             } else {
