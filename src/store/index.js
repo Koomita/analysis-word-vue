@@ -191,8 +191,29 @@ export default new Vuex.Store({
       dispatch('getEditions')
     },
     async getPaper({ state, commit }) {
-      const { testIds } = state
-      const res = await Vue.prototype.$post('/api/paperupload/view/paper.do', testIds) || { dataInfo: {} }
+      const { testIds, items, subjects } = state
+      const types = []
+      await items.forEach((el, i) => {
+        const { classifyId } = el
+        const index = types.findIndex((item) => item.classifyId === classifyId)
+        if (index < 0) {
+          types.push({
+            classifyId,
+            paragraphName: subjects.find((item) => item.classifyId === classifyId)?.subjectTitle,
+            questionIds: [testIds[i]],
+          })
+        } else {
+          types.splice(index, 1, {
+            ...types[index],
+            questionIds: types[index].questionIds.concat([testIds[i]]),
+          })
+        }
+      })
+      const arr = types.map((el) => ({
+        paragraphName: el.paragraphName,
+        questionIds: el.questionIds,
+      }))
+      const res = await Vue.prototype.$post('/api/paperupload/view/paper.do', arr) || { dataInfo: {} }
       const nums = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
       const getRealNums = (i) => {
         const num = `${i}`.split('')
@@ -208,37 +229,6 @@ export default new Vuex.Store({
           ...el,
           paragraphNo: i < 10 ? nums[i] : getRealNums(i),
         })) || [],
-        // value: [
-        //   {
-        //     quesTypeNameId: 1849,
-        //     paragraphName: '一、阅读理解',
-        //     paragraphNo: 1,
-        //     questionList: [
-        //       {
-        //         id: 1112,
-        //         questionNo: 1,
-        //         content: '题干',
-        //       },
-        //       {
-        //         id: 1113,
-        //         questionNo: 2,
-        //         content: '题干',
-        //       },
-        //     ],
-        //   },
-        //   {
-        //     quesTypeNameId: 1917,
-        //     paragraphName: '二、完形填空',
-        //     paragraphNo: 2,
-        //     questionList: [
-        //       {
-        //         id: 1114,
-        //         questionNo: 3,
-        //         content: '题干',
-        //       },
-        //     ],
-        //   },
-        // ],
       })
     },
   },
