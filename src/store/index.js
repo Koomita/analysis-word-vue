@@ -87,7 +87,7 @@ export default new Vuex.Store({
           state.items.push({ itemId: currentItemId, ...item })
         }
         // 再把content里面的anser字段改为true
-        console.log(state.items)
+        // console.log(state.items)
         state.content.forEach((el) => {
           if (el.itemId) {
             el.anser = state.items.findIndex((obj) => obj.itemId === el.itemId) > -1

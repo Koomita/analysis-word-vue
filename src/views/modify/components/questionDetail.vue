@@ -330,7 +330,7 @@ export default {
     },
     // 如果已经设置过答案，回显
     currentItem() {
-      if (!this.items.length) return {}
+      if (!this.items.length || this.loading) return {}
       return this.items.find((el) => el.itemId === this.currentItemId) || {}
     },
   },
@@ -477,18 +477,20 @@ export default {
     clearAnswer() {
       // 清空answer
       const currentIndex = this.items.findIndex((el) => el.itemId === this.currentItemId)
-      if (currentIndex > -1) {
+      if (currentIndex !== -1) {
         this.updateState({
           name: 'items',
           value: [
             ...this.items.slice(0, currentIndex),
-            ...[{
-              ...this.items[currentIndex],
+            {
+              ...this.currentItem,
               answers: '',
-            }],
+            },
             ...this.items.slice(currentIndex + 1),
           ],
         })
+        // 清空答案
+        this.$refs.formField.form.resetFields(['answers'])
       }
     },
     // 删除小题
