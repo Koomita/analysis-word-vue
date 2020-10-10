@@ -427,22 +427,12 @@ export default {
     },
     // 清空答案
     clearAnswer() {
-      const itemIndex = this.items.findIndex((el) => el.itemId === this.currentItemId)
-      if (itemIndex > -1) {
-        this.updateState({
-          name: 'items',
-          value: [
-            ...this.items.slice(0, itemIndex),
-            {
-              ...this.items[itemIndex],
-              anser: false,
-              answers: '',
-            },
-            ...this.items.slice(itemIndex + 1),
-          ],
-        })
-        this.$refs.formField.form.resetFields(['answers'])
+      this.editingItem = {
+        ...this.editingItem,
+        answers: '',
+        anser: false,
       }
+      this.$refs.formField.form.resetFields(['answers'])
     },
     // 处理选项
     async handleOptionData(futureOption) {
