@@ -242,6 +242,12 @@ export default {
       }
       return 0
     },
+    classifyId() {
+      if (this.currentQuestion.length) {
+        return this.currentQuestion[0].classifyId
+      }
+      return 0
+    },
     // 判断当前选择题是单选、多选还是不定项
     chooseType() {
       const {
@@ -355,6 +361,7 @@ export default {
     },
   },
   mounted() {
+    this.updateState({ name: 'step', value: 1 })
     this.getAllLists()
   },
   methods: {
@@ -467,6 +474,23 @@ export default {
       }
       return icons
     },
+    clearAnswer() {
+      // 清空answer
+      const currentIndex = this.items.findIndex((el) => el.itemId === this.currentItemId)
+      if (currentIndex > -1) {
+        this.updateState({
+          name: 'items',
+          value: [
+            ...this.items.slice(0, currentIndex),
+            ...[{
+              ...this.items[currentIndex],
+              answers: '',
+            }],
+            ...this.items.slice(currentIndex + 1),
+          ],
+        })
+      }
+    },
     // 删除小题
     delTest(index) {
       this.$confirm({
@@ -479,7 +503,7 @@ export default {
             // 删除完形填空小题
             option.splice(index, 1)
             const { table, text } = formatTableString(option)
-            this.updateTable(table, text)
+            this.updateTable(table, text, 'del')
           } else if (this.isOptionGroup) {
             // 删除分组小题，直接删除
             const contentOptions = this.currentContent.filter((el) => el.options && el.options.length)
@@ -490,8 +514,9 @@ export default {
             })
             contentOptions.splice(actualIndex, option[index].options.length)
             const futureOption = this.currentQuestion.filter((el) => !el.option || !el.options.length).concat(contentOptions)
-            this.updateOptions(futureOption)
+            this.updateOptions({ content: futureOption, type: 'del' })
           }
+          this.clearAnswer()
         },
       })
     },
@@ -542,7 +567,7 @@ export default {
           })
         }
       })
-      this.updateOptions(content)
+      this.updateOptions({ content })
     },
     del(optionIndex, queIndex) {
       // 删除一个选项
@@ -675,7 +700,8 @@ export default {
         el.content = str
       })
       const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(contentOptions)
-      this.updateOptions(direction === 'del' ? futureOption.map((el) => ({ ...el, anser: false })) : futureOption)
+      this.updateOptions({ content: futureOption, type: direction })
+      direction === 'del' && this.clearAnswer()
     },
     moveDown(optionIndex, queIndex) {
       !this.isFillup && this.move('down', optionIndex, queIndex)
@@ -721,7 +747,7 @@ export default {
               options: [{ option: optionLabel[option.length], value: '' }],
             },
           ])
-          this.updateOptions(content)
+          this.updateOptions({ content })
         } else {
           this.handleOptionData([
             ...option,
@@ -734,7 +760,7 @@ export default {
     save() {
       this.$refs.formField.form.validateFields(async (err, values) => {
         if (!err) {
-          const { questionTypeId, quesTypeNameId } = this
+          const { questionTypeId, quesTypeNameId, classifyId } = this
           if (this.isFillup || this.isOptionGroup) {
             // 处理完形填空选项，信息匹配、阅读理解也不需要传option
             const { option } = this
@@ -763,7 +789,7 @@ export default {
               })
             })
             const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(options)
-            this.updateOptions(futureOption)
+            this.updateOptions({ content: futureOption, type: 'save' })
             // 修改option
             await option.forEach((el) => {
               Object.assign(optionValues, {
@@ -782,6 +808,7 @@ export default {
             bookId: this.editionId,
             editionId: this.gradeId,
             categoryId: this.cateId,
+            classifyId,
           })
         }
       })
