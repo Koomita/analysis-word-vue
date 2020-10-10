@@ -441,6 +441,7 @@ export default {
             ...this.items.slice(itemIndex + 1),
           ],
         })
+        this.$refs.formField.form.resetFields(['answers'])
       }
     },
     // 处理选项
