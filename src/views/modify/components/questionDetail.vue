@@ -414,25 +414,11 @@ export default {
               tds.splice(0, 1, text)
               return `<tr> ${tds.map((item) => `<td> <span> ${item.trim()} </span> </td> \r`).join(' ')} </tr> \r`
             }).join(' ')
-            this.editingItem = {
-              ...this.editingItem,
-              options: `<table> \r <tbody> \r ${str} \r </tbody> \r </table>`,
-            }
+            this.updateEditingItem('del', `<table> \r <tbody> \r ${str} \r </tbody> \r </table>`)
           }
-          // 清空原来设置的答案
-          this.clearAnswer()
           this.loading = false
         },
       })
-    },
-    // 清空答案
-    clearAnswer() {
-      this.editingItem = {
-        ...this.editingItem,
-        answers: '',
-        anser: false,
-      }
-      this.$refs.formField.form.resetFields(['answers'])
     },
     // 处理选项
     async handleOptionData(futureOption) {
@@ -471,12 +457,26 @@ export default {
         options: currentAdjustTr,
       })
       const { table } = formatTableString(option)
+      this.updateEditingItem(direction, table)
+      this.loading = false
+    },
+    // 更新当前编辑内容
+    updateEditingItem(direction, options) {
+      const obj = {}
+      if (direction === 'del') {
+        // 删除东西清空设置答案
+        console.log(this.$refs.formField.form)
+        Object.assign(obj, {
+          anser: false,
+          answers: '',
+        })
+        this.$refs.formField.form.resetFields(['answers'])
+      }
       this.editingItem = {
         ...this.editingItem,
-        options: table,
+        options,
+        ...obj,
       }
-      direction === 'del' && this.clearAnswer()
-      this.loading = false
     },
     del(optionIndex, queIndex) {
       // 删除一个选项
@@ -515,11 +515,7 @@ export default {
         })
         res = newRes
       }
-      this.editingItem = {
-        ...this.editingItem,
-        options: res,
-        anser: direction === 'del' ? false : this.editingItem.anser,
-      }
+      this.updateEditingItem(direction, res)
     },
     moveDown(optionIndex, queIndex) {
       !this.isFillup && this.move('down', optionIndex)
@@ -543,20 +539,14 @@ export default {
               value: '',
             })),
           }]))
-          this.editingItem = {
-            ...this.editingItem,
-            options: table,
-          }
+          this.updateEditingItem('add', table)
         }
       } else {
         // 添加选项
-        this.editingItem = {
-          ...this.editingItem,
-          options: {
-            ...this.editingItem.options,
-            [optionLabel[currentLen]]: '',
-          },
-        }
+        this.updateEditingItem('add', {
+          ...this.editingItem.options,
+          [optionLabel[currentLen]]: '',
+        })
       }
     },
     // 收集新table内容
@@ -663,7 +653,16 @@ export default {
             let newContent = ''
             let otherOption = hasOption
             do {
-              newContent += `${optionLabel[num]}. ${values[optionLabel[num]]} `
+              // 因为富文本框里的内容是html，取innerHTML
+              const tagReg = new RegExp(/<p[^>]*>(.*?)<\/p>/)
+              let value = values[optionLabel[num]]
+              if (tagReg.exec(value)) {
+                // 取innerHTML
+                const parser = new DOMParser()
+                const dom = parser.parseFromString(value, 'text/html')
+                value = dom.getElementsByTagName('body')[0].childNodes[0].innerHTML
+              }
+              newContent += `${optionLabel[num]}. ${value} `
               const rest = otherOption.input.replace(otherOption[0], '')
               otherOption = reg.exec(rest)
               if (otherOption) {
