@@ -255,6 +255,7 @@ export default {
           const index = subjects.findIndex((el) => el.id === values.id)
           this.updateSubjects({ item: { ...subjects[index], ...values }, index })
           this.showEditModal = false
+          this.$forceUpdate()
         }
       })
     },

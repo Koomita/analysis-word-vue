@@ -54,7 +54,6 @@ export default {
           if (target.length) {
             const { id, anser, classifyId } = target[0]
             const index = list.findIndex((item) => `${item.classifyId}` === `${classifyId}`)
-            // console.log(id)
             if (index < 0) {
               const questionType = this.subjects.find((obj) => `${obj.id}` === `${id}`)
               const subjectType = this.questionTypes.find((obj) => `${obj.id}` === `${id}`)

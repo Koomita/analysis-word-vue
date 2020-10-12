@@ -143,7 +143,13 @@ export default {
           let { content } = el
           const arr = this.init || this.clearItems ? this.itemIds : this.itemContents
           const paraIndex = arr.findIndex((item) => item === itemId)
-          content = content.indexOf('<table') > -1 ? `${content.replace('<table', `<table data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"`)}` : content
+          const tags = ['<table', '<img', '<svg']
+          // 给table、img这些标签加上contentId、itemId
+          for (let i = 0; i < tags.length; i += 1) {
+            if (content.indexOf(tags[i]) > -1) {
+              content = `${content.replace(tags[i], `${tags[i]} data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"`)}`
+            }
+          }
           if (!contentIds.includes(contentId)) {
             contentIds.push(contentId)
             if (paraIndex > -1) {
@@ -176,6 +182,7 @@ export default {
       // 把字符串变为数组
       const parser = new DOMParser()
       const currentDom = parser.parseFromString(val, 'text/html')
+      // 把回车符过滤掉
       const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((el) => el.nodeName !== '#text')
       const contents = currentContent.map((el) => {
         const { childNodes } = el
@@ -206,6 +213,7 @@ export default {
         const item = this.content[itemIndex] || {}
         let { contentId, itemId } = item
         if (itemIds.includes(itemId) && contentIds.includes(contentId)) {
+          // 拆分原来已分好的题目，重新赋值
           contentId = v4()
           itemId = v4()
         }
@@ -238,36 +246,61 @@ export default {
       this.showModal = true
     },
     async addQuestion({ questionTypeId, id }) {
+      const { items, itemIds, content } = this
       // 更新题块
-      const index = this.content.findIndex((el) => el.contentId === this.items[0].contentId)
+      const index = content.findIndex((el) => el.contentId === this.items[0].contentId)
       // 生成新的itemId
       const itemId = v4()
-      // console.log('new itemId', itemId)
-      const newItems = this.items.map((el, i) => ({
-        ...this.content[index + i],
+      const newItems = items.map((el, i) => ({
+        ...content[index + i],
         ...el,
         itemId,
         id,
         questionTypeId,
+        classifyId: id, // 更新题块，classifyId更新为id
       }))
+      /**
+       * 更新itemIds
+       * 先找出当前题目的前一题itemId
+       * 再找出前一题itemId在itemIds数组里的位置
+       */
+      const prevItemId = content[index - 1].itemId
+      const prevIndex = itemIds.findIndex((el) => el === prevItemId)
+      this.updateState({
+        name: 'itemIds',
+        value: [
+          ...itemIds.slice(0, prevIndex + 1), // 截取当前itemId前部分
+          itemId, // 塞入当前itemId
+          ...itemIds.slice(prevIndex + 1), // 截取当前itemId后部分
+        ],
+      })
+      // 更新内容
       this.updateContent({
-        content: [...this.content.slice(0, index), ...newItems, ...this.content.slice(index + newItems.length)],
+        content: [...content.slice(0, index), ...newItems, ...content.slice(index + newItems.length)],
         newItemId: itemId,
       })
+      // 更新现有题量
       const { subjects } = this
-      const subjectIndex = subjects.findIndex((el) => el.id === id)
+      let subjectIndex = subjects.findIndex((el) => el.id === id)
+      let item = subjects[subjectIndex] || this.questionTypes.find((el) => el.id === id)
       if (subjectIndex > -1) {
-        // 更新现有题量
-        this.updateSubjects({ item: { ...subjects[subjectIndex], count: subjects[subjectIndex].count + 1 }, index: subjectIndex > -1 ? subjectIndex : subjects.length })
+        item = {
+          ...item,
+          count: subjects[subjectIndex].count + 1,
+        }
       } else {
-        const item = this.questionTypes.find((el) => el.id === id)
-        this.updateSubjects({
-          item: {
-            subjectTitle: item.name, count: 1, id, questionTypeId,
-          },
-          index: subjects.length,
-        })
+        subjectIndex = subjects.length
+        // 多了个classifyId，新增的就把id当作classifyId
+        item = {
+          subjectTitle: item.name,
+          count: 1,
+          id,
+          questionTypeId,
+          classifyId: id,
+        }
       }
+      console.log(item)
+      this.updateSubjects({ item, index: subjectIndex })
       this.showModal = false
     },
   },
