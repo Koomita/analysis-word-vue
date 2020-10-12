@@ -72,6 +72,7 @@ export default new Vuex.Store({
     // 更新题量题型
     updateSubjects(state, { item, index }) {
       state.subjects.splice(index, 1, item)
+      // console.log(state.subjects)
     },
     // 保存题目
     updateItems(state, item) {

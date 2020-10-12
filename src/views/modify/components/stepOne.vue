@@ -14,9 +14,9 @@
      :pagination="false"
      :row-key="record => record.classifyId"
     >
-      <template slot="action" slot-scope="text, record">
-        <a-button type="link" @click="edit(record)">编辑</a-button>
-        <a-button type="link" @click="del(record)">删除</a-button>
+      <template slot="action" slot-scope="text, record, $index">
+        <a-button type="link" @click="edit(record, $index)">编辑</a-button>
+        <a-button type="link" @click="del(record, $index)">删除</a-button>
       </template>
     </a-table>
     <p class="btn-box">
@@ -59,6 +59,8 @@ export default {
       id: '', // 当前题型id
       count: '', // 当前题型数量
       form: this.$form.createForm(this),
+      classifyId: '', // 当前题型的分类id
+      currentIndex: -1, // 当前题型索引
     }
   },
   computed: {
@@ -218,10 +220,12 @@ export default {
       this.getQuestionClasses()
       this.$router.push('/modify/detail')
     },
-    edit(record) {
-      const { id, count } = record
+    edit(record, index) {
+      const { id, count, classifyId } = record
       this.id = id
       this.count = count
+      this.classifyId = classifyId
+      this.currentIndex = index
       this.showEditModal = true
     },
     del(record) {
@@ -251,9 +255,49 @@ export default {
       // 更新题型数量
       this.form.validateFields((err, values) => {
         if (!err) {
-          const { subjects } = this
-          const index = subjects.findIndex((el) => el.id === values.id)
-          this.updateSubjects({ item: { ...subjects[index], ...values }, index })
+          const {
+            subjects, questionTypes, classifyId, currentIndex, content,
+          } = this
+          const item = subjects.find((el) => el.id === values.id)
+          const questionType = questionTypes.find((el) => el.id === values.id)
+          this.updateSubjects({
+            item: {
+              ...item,
+              ...values,
+              subjectTitle: questionType.name,
+              classifyId,
+            },
+            index: currentIndex,
+          })
+          // 把原来content的questionTypeId改为修改后的id
+          const startIndex = content.findIndex((el) => el.classifyId === classifyId)
+          const nextClassifyId = subjects[currentIndex + 1]?.classifyId
+          let endIndex = -1
+          if (!nextClassifyId) {
+            // 找content里面当前classifyId最后出现的位置
+            for (let i = startIndex; i < content.length; i += 1) {
+              const currentClassifyId = content[i].classifyId
+              if (currentClassifyId !== classifyId) {
+                endIndex = i
+                break
+              }
+            }
+          } else {
+            // 找content里面下一个classifyId首次出现的位置
+            endIndex = content.findIndex((el) => el.classifyId === nextClassifyId)
+          }
+          this.updateState({
+            name: 'content',
+            value: [
+              ...content.slice(0, startIndex),
+              ...content.filter((el, index) => index >= startIndex && index < endIndex && el.itemId).map((el) => ({
+                ...el,
+                id: values.id,
+                questionTypeId: questionType.questionTypeId,
+              })),
+              ...content.slice(endIndex),
+            ],
+          })
           this.showEditModal = false
           this.$forceUpdate()
         }

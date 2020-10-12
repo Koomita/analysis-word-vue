@@ -55,7 +55,7 @@ export default {
             const { id, anser, classifyId } = target[0]
             const index = list.findIndex((item) => `${item.classifyId}` === `${classifyId}`)
             if (index < 0) {
-              const questionType = this.subjects.find((obj) => `${obj.id}` === `${id}`)
+              const questionType = this.subjects.find((obj) => `${obj.classifyId}` === `${classifyId}`)
               const subjectType = this.questionTypes.find((obj) => `${obj.id}` === `${id}`)
               list.push({
                 itemId: [el],
