@@ -192,6 +192,8 @@ export default {
           // 把删除样式的span去掉
           const cons = childs.filter((item) => item.className !== 'del-icon')
           innerHTML = cons.map((item) => item.data).join('')
+        } else if (childs.length && childs[0].nodeName === 'IMG') {
+          console.log(childs)
         }
         return {
           content: el.localName === 'table' ? `<table>${innerHTML}</table>` : innerHTML,

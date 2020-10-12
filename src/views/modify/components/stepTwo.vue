@@ -99,7 +99,7 @@ export default {
     async upload() {
       this.updateState({ name: 'loading', value: true })
       const { items, subjectId, teacherId } = this
-      const itemList = items.map(async (el) => {
+      const itemList = items.map((el) => {
         const answer = {}
         let { answers, videoUrl, options } = el
         const {
@@ -123,11 +123,12 @@ export default {
           */
         if (typeof answers === 'object') {
           // 多选
-          await answers.forEach((item, index) => {
+          for (let i = 0; i < answers.length; i += 1) {
+            const item = answers[i]
             Object.assign(answer, {
-              [index]: item.toUpperCase(),
+              [i]: item.toUpperCase(),
             })
-          })
+          }
         } else if ([1, 3, 5].includes(questionTypeId)) {
           let ans = []
           if (answers.indexOf('<p') > -1) {
@@ -142,11 +143,12 @@ export default {
           } else {
             ans = answers.split('')
           }
-          await ans.forEach((item, index) => {
+          for (let i = 0; i < ans.length; i += 1) {
+            const item = ans[i]
             Object.assign(answer, {
-              [index]: ![1, 5].includes(questionTypeId) ? item : item.toUpperCase(),
+              [i]: ![1, 5].includes(questionTypeId) ? item : item.toUpperCase(),
             })
-          })
+          }
         }
         answers = JSON.stringify(answer)
         options = JSON.stringify(options)
@@ -176,6 +178,7 @@ export default {
           dimensionCoreValueIds,
         }
       })
+      // return console.log(items, itemList)
       try {
         const res = await this.$post('/api/paperupload/upload/ques.do', {
           subjectId,
