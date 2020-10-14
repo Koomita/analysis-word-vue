@@ -101,11 +101,13 @@ export default {
       const { items, subjectId, teacherId } = this
       const itemList = items.map((el) => {
         const answer = {}
-        let { answers, videoUrl, options } = el
+        let {
+          answers, videoUrl, options, content, analysis,
+        } = el
         const {
           quesTypeNameId, questionClassId, sourceId,
           difficultyCoefficient, pointIds, bookId,
-          categoryId, editionId, content, analysis,
+          categoryId, editionId,
           explanation, comment, dimensionPointIds,
           dimensionCapabilityIds,
           dimensionAttainmentIds,
@@ -139,7 +141,7 @@ export default {
             ans = list[0] ? list[0].textContent.split('') : []
           } else if (questionTypeId === 3) {
             // 判断题
-            ans = [answers]
+            ans = [this.removeTag(answers)]
           } else {
             ans = answers.split('')
           }
@@ -151,7 +153,17 @@ export default {
           }
         }
         answers = JSON.stringify(answer)
+        if (typeof options === 'object') {
+          const optionKeys = Object.keys(options)
+          for (let i = 0; i < optionKeys.length; i += 1) {
+            Object.assign(options, {
+              [optionKeys[i]]: this.removeTag(options[optionKeys[i]]),
+            })
+          }
+        }
         options = JSON.stringify(options)
+        content = this.removeTag(content)
+        analysis = this.removeTag(analysis)
         if (videoUrl && videoUrl.length) {
           videoUrl = videoUrl[0].url
         }
@@ -202,6 +214,16 @@ export default {
     cancel() {
       this.showCompleteModal = false
       this.$router.replace('/')
+    },
+    // 去掉最外层p标签
+    removeTag(val) {
+      if (val.startsWith('<p')) {
+        const parser = new DOMParser()
+        const currentDom = parser.parseFromString(val, 'text/html')
+        const nodes = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
+        val = nodes[0].innerHTML
+      }
+      return val
     },
   },
 }
