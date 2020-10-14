@@ -138,7 +138,7 @@ export default {
       if (this.content.length) {
         this.content.forEach((el) => {
           const {
-            itemId, id, contentId,
+            itemId, id, contentId, classifyId,
           } = el
           let { content } = el
           const arr = this.init || this.clearItems ? this.itemIds : this.itemContents
@@ -147,7 +147,7 @@ export default {
           // 给table、img这些标签加上contentId、itemId
           for (let i = 0; i < tags.length; i += 1) {
             if (content.indexOf(tags[i]) > -1) {
-              content = `${content.replace(tags[i], `${tags[i]} data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"`)}`
+              content = `${content.replace(tags[i], `${tags[i]} data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}`)}`
             }
           }
           if (!contentIds.includes(contentId)) {
@@ -155,12 +155,12 @@ export default {
             if (paraIndex > -1) {
               if (!itemIds.includes(itemId)) {
                 itemIds.push(itemId)
-                detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">&nbsp;</span>${content}</p>`
+                detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"  data-classifyid="${classifyId}">&nbsp;</span>${content}</p>`
               } else {
-                detail += `<p class="question-block" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
+                detail += `<p class="question-block" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}">${content}</p>`
               }
             } else {
-              detail += `<p data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
+              detail += `<p data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}">${content}</p>`
             }
           }
         })
@@ -184,20 +184,28 @@ export default {
       const currentDom = parser.parseFromString(val, 'text/html')
       // 把回车符过滤掉
       const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((el) => el.nodeName !== '#text')
+      console.log('currentContent', currentContent)
       const contents = currentContent.map((el) => {
         const { childNodes } = el
         let { innerHTML } = el
+        const {
+          contentid, classifyid, itemid, id,
+        } = el.dataset
         const childs = Array.from(childNodes || [])
         if (childs.length && childs[0].nodeName === 'SPAN' && childs[0].className === 'del-icon') {
           // 把删除样式的span去掉
           const cons = childs.filter((item) => item.className !== 'del-icon')
-          innerHTML = cons.map((item) => item.data).join('')
+          innerHTML = cons.map((item) => item.outerHTML).join('')
         } else if (childs.length && childs[0].nodeName === 'IMG') {
-          console.log(childs)
+          console.log('img', childs)
+        } else if (el.localName === 'table') {
+          innerHTML = el.outerHTML.replace(` data-itemid="${itemid}" data-id="${id}" data-contentid="${contentid}" data-classifyid="${classifyid}"`, '')
+          // console.log('table', innerHTML)
         }
         return {
-          content: el.localName === 'table' ? `<table>${innerHTML}</table>` : innerHTML,
-          contentId: el.dataset.contentid,
+          content: innerHTML,
+          contentId: contentid,
+          classifyId: classifyid,
         }
       })
       let hasContentId = true
@@ -241,6 +249,7 @@ export default {
         contents.push({
           content: nodes.innerHTML,
           contentId: nodes.dataset.contentid,
+          classifyId: nodes.classifyId,
         })
       }
       this.items = contents
@@ -248,18 +257,24 @@ export default {
       this.showModal = true
     },
     async addQuestion({ questionTypeId, id }) {
-      const { items, itemIds, content } = this
+      const {
+        items, itemIds, content, subjects,
+      } = this
       // 更新题块
       const index = content.findIndex((el) => el.contentId === this.items[0].contentId)
       // 生成新的itemId
       const itemId = v4()
+      const subject = subjects.find((el) => el.classifyId === this.items[0].classifyId)
+      console.log(subjects, subject)
+      // 先看当前subjects是否还有选中题目的classifyId，没有才更新为id
+      const classifyId = subject?.classifyId || id
       const newItems = items.map((el, i) => ({
         ...content[index + i],
         ...el,
         itemId,
         id,
         questionTypeId,
-        classifyId: id, // 更新题块，classifyId更新为id
+        classifyId, // 更新classifyId
       }))
       /**
        * 更新itemIds
@@ -282,7 +297,6 @@ export default {
         newItemId: itemId,
       })
       // 更新现有题量
-      const { subjects } = this
       let subjectIndex = subjects.findIndex((el) => el.id === id)
       let item = subjects[subjectIndex] || this.questionTypes.find((el) => el.id === id)
       if (subjectIndex > -1) {
@@ -298,7 +312,7 @@ export default {
           count: 1,
           id,
           questionTypeId,
-          classifyId: id,
+          classifyId,
         }
       }
       console.log(item)

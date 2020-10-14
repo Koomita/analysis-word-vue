@@ -609,6 +609,7 @@ export default {
               ...this.items.slice(itemIndex + 1),
             ],
           })
+          console.log(this.items)
           // 更新原content数组
           this.updateContent(values)
         }
