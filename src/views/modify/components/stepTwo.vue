@@ -105,7 +105,7 @@ export default {
           answers, videoUrl, options, content, analysis,
         } = el
         const {
-          quesTypeNameId, questionClassId, sourceId,
+          id, questionClassId, sourceId,
           difficultyCoefficient, pointIds, bookId,
           categoryId, editionId,
           explanation, comment, dimensionPointIds,
@@ -172,7 +172,7 @@ export default {
           questionTypeId,
           videoUrl,
           options,
-          quesTypeNameId,
+          quesTypeNameId: id,
           questionClassId,
           sourceId,
           difficultyCoefficient,
