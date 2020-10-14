@@ -220,8 +220,9 @@ export default {
       if (val.startsWith('<p')) {
         const parser = new DOMParser()
         const currentDom = parser.parseFromString(val, 'text/html')
-        const nodes = Array.from(currentDom.getElementsByTagName('body')[0].childNodes)
-        val = nodes[0].innerHTML
+        const nodes = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((el) => el.nodeName !== '#text')
+        val = nodes.length > 1 ? nodes.map((el) => el.innerHTML).join('<br/>') : nodes[0].innerHTML
+        // console.log(nodes, val)
       }
       return val
     },
