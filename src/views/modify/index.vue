@@ -153,7 +153,7 @@ export default {
           // 给table、img这些标签加上contentId、itemId
           for (let i = 0; i < tags.length; i += 1) {
             if (content.indexOf(tags[i]) > -1) {
-              content = `${content.replace(tags[i], `${tags[i]} data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}`)}`
+              content = `${content.replace(tags[i], `${tags[i]} data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}"`)}`
             }
           }
           if (!contentIds.includes(contentId)) {
