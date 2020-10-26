@@ -42,9 +42,13 @@ export default new Vuex.Store({
     },
     // 删除题块
     delItem(state, { itemId, id }) {
-      // console.log(itemId, state.itemIds.findIndex((el) => el === itemId))
+      // return console.log(itemId, state.itemIds.findIndex((el) => el === itemId))
       const index = state.itemIds.findIndex((el) => el === itemId)
       state.itemIds.splice(index, 1)
+      const itemIndex = state.items.findIndex((el) => el.itemId === itemId)
+      if (itemIndex > -1) {
+        state.items.splice(itemIndex, 1)
+      }
       // 同时subjects对应题量-1
       const i = state.subjects.findIndex((el) => `${el.id}` === `${id}`)
       const subject = state.subjects[i]
@@ -75,6 +79,7 @@ export default new Vuex.Store({
     // 更新题量题型
     updateSubjects(state, { item, index }) {
       state.subjects.splice(index, 1, item)
+      // console.log(state.subjects)
     },
     // 保存题目
     updateItems(state, item) {
@@ -98,7 +103,7 @@ export default new Vuex.Store({
     },
     // 删除题型
     delQuestionType(state, id) {
-      console.log(id)
+      // console.log(id)
       const tmp = new Map()
       const contents = state.content.filter((el) => state.itemIds.includes(el.itemId)).filter((el) => `${el.id}` === `${id}`).map((el) => el.itemId).filter((item) => !tmp.has(item) && tmp.set(item, 1))
       contents.forEach((el) => {

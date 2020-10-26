@@ -70,7 +70,7 @@
                 <template v-if="oIndex === ans.options.length - 1">
                   <p class="del-tip" @click="delTest(ansIndex)">删除该小题</p>
                   <template v-if="ansIndex === option.length - 1">
-                    <a-button class="add-btn" @click="pushOption">
+                    <a-button class="add-btn" @click="pushOption('optionGroup')">
                       <a-icon type="plus" />添加小题
                     </a-button>
                   </template>
@@ -113,7 +113,6 @@
   </div>
 </template>
 <script>
-import { v4 } from 'uuid'
 import { mapState, mapActions, mapMutations } from 'vuex'
 import icon1 from '@/assets/trash@2x.png'
 import icon2 from '@/assets/down@2x.png'
@@ -155,9 +154,9 @@ export default {
       adjustOptionIndex: [], // 调整的选项索引，完形填空用
       fileList: [], // 上传视频
       optionLen: 4, // 选项数
-      optionGroup: [], // 分组选择题
       optionLabel,
       fileUrl: '', // 视频url
+      editingItem: '', // 当前编辑的题目对象，可编辑
     }
   },
   computed: {
@@ -183,6 +182,11 @@ export default {
       // 找出当前题目的内容
       return this.content.filter((el) => el.itemId === this.currentItemId).filter((el) => el.content)
     },
+    // 当前已保存题目
+    currentItem() {
+      if (!this.items.length) return {}
+      return this.items.find((el) => el.itemId === this.currentItemId) || {}
+    },
     // 是否为完形填空
     isFillup() {
       if (!this.currentQuestion || !this.currentQuestion.length) return false
@@ -194,53 +198,15 @@ export default {
     },
     // 题目
     question() {
-      if (!this.currentQuestion || !this.currentQuestion.length || this.loading) { return '' }
-      const item = this.items.find((el) => el.itemId === this.currentItemId)
-      if (item) {
-        return item.content
-      }
-      const filterNo = (el, index) => {
-        if (index === 0) {
-          const no = /^(\d+)[.、．:：，]+/.exec(el.content.trim()) ? /^(\d+)[.、．:：，]+/.exec(el.content.trim())[0] : ''
-          return el.content.replace(no, '')
-        }
-        return el.content
-      }
-      // 非选择题、完形填空，全部显示
-      if (![1, 5, 8].includes(this.questionTypeId) || (this.questionTypeId === 5 && !this.isFillup)) {
-        return this.currentQuestion
-          .map((el, i) => filterNo(el, i))
-          .join('') || ''
-      }
-      // 完形填空题目，选项在最后一条，内容为表格
-      if (this.isFillup) {
-        return this.currentQuestion
-          .filter((el, i) => i < this.currentQuestion.length - 1)
-          .map((el, i) => filterNo(el, i))
-          .join('')
-      }
-      // 把有选项的content从题干中筛除再map
-      // 去掉第一行的题号
-      return (
-        this.currentQuestion
-          .filter((el) => !el.options || !el.options.length)
-          .map((el, i) => filterNo(el, i))
-          .join('') || ''
-      )
+      return this.currentItem?.content || ''
     },
     // 题目类型id
     questionTypeId() {
-      if (this.currentQuestion.length) {
-        return this.currentQuestion[0].questionTypeId
-      }
-      return 0
+      return this.currentItem?.questionTypeId || 0
     },
     // 题型唯一标识
     quesTypeNameId() {
-      if (this.currentQuestion.length) {
-        return this.currentQuestion[0].id
-      }
-      return 0
+      return this.currentItem?.id || 0
     },
     classifyId() {
       if (this.currentQuestion.length) {
@@ -256,7 +222,7 @@ export default {
       if (!questionTypeId || questionTypeId !== 1) return ''
       // 先从subjects找，找不到再找questionTypes里的
       const item = subjects.find((el) => el.id === quesTypeNameId) || questionTypes.find((el) => el.id === quesTypeNameId)
-      const name = item.subjectTitle || item.name
+      const name = item?.subjectTitle || item?.name
       const types = {
         单选: 'radio',
         单项选择: 'radio',
@@ -274,13 +240,6 @@ export default {
       }
       return type
     },
-    // 选项是否分开，非一行n个选项
-    optionSplit() {
-      return (
-        this.currentQuestion.filter((el) => el.options && el.options.length)
-          .length > 1
-      )
-    },
     // 选项
     option() {
       // 只处理选择题1和英语的完形填空5
@@ -288,36 +247,24 @@ export default {
       if (!this.questionTypeId || ![1, 5, 8].includes(this.questionTypeId) || (this.questionTypeId === 5 && !this.isFillup)) return []
       if (this.isFillup) {
         // 完形填空选项
-        const answers = this.currentQuestion[this.currentQuestion.length - 1]
-        const { text } = answers
-        const option = formatTableOptions(text)
-        console.log(option)
+        const option = formatTableOptions(this.editingItem.options)
         return option
       }
-      const option = this.currentQuestion
-        .filter((el) => el.options && el.options.length)
-        .map((el) => el.options)
-        .flat()
-      const multiple = option.filter((el) => el.option === 'A').length > 1
-      if (multiple) {
-        return this.optionGroup
-      }
-      let { options } = this.currentItem
-      options = JSON.parse(options || '{}')
+      const { options } = this.editingItem || { options: {} }
       // 检查option中间有无断层
-      for (let i = 0; i < option.length; i += 1) {
-        const op = option[i].option
-        const { value } = option[i]
-        if (op !== optionLabel[i]) {
-          // 在前面塞
-          const index = optionLabel.findIndex((el) => el === op)
-          const middle = optionLabel.slice(i, index)
-          for (let j = 0; j < middle.length + 1; j += 1) {
-            const opt = j === middle.length ? op : middle[j]
-            // 更新修改后的内容
-            const val = j === middle.length ? options[opt] || value : options[opt]
-            option[i + j] = { option: opt, value: val }
+      const option = []
+      let i = 0
+      for (const [key, value] of Object.entries(options)) {
+        if (key !== optionLabel[i]) {
+          const len = optionLabel.findIndex((el) => el === key)
+          for (let j = 0; j < len; j += 1) {
+            const labelIndex = j + i
+            option.push({ option: optionLabel[labelIndex], value: key === optionLabel[labelIndex] ? value : '' })
           }
+          i += len
+        } else {
+          option.push({ option: key, value })
+          i += 1
         }
       }
       return option
@@ -327,11 +274,6 @@ export default {
       return (
         this.isFillup || Boolean(this.option.length && this.option[0].answerNo)
       )
-    },
-    // 如果已经设置过答案，回显
-    currentItem() {
-      if (!this.items.length || this.loading) return {}
-      return this.items.find((el) => el.itemId === this.currentItemId) || {}
     },
   },
   watch: {
@@ -344,50 +286,26 @@ export default {
         this.cateId = item?.categoryId || undefined
         this.fileList = item?.videoUrl || []
         this.fileUrl = this.fileList[0] ? this.fileList[0].url : ''
+        this.editingItem = this.currentItem
         if (this.editionId) {
           this.getGrades(this.editionId)
         }
-        this.updateOptionGroup()
         setTimeout(() => {
           this.loading = false
         }, 100)
       },
     },
-    content: {
-      handler() {
-        this.updateOptionGroup()
-      },
-      deep: true,
-    },
   },
   mounted() {
+    // console.log(this.items)
+    this.updateState({ name: 'loading', value: false })
     this.updateState({ name: 'step', value: 1 })
+    this.editingItem = this.currentItem
     this.getAllLists()
   },
   methods: {
     ...mapActions(['getAllLists']),
     ...mapMutations(['updateState', 'updateItems', 'updateOptions']),
-    updateOptionGroup() {
-      const list = this.currentQuestion.filter((el) => el.options && el.options.length)
-      // 计算一组选项的长度
-      const optionLen = list.slice(1).findIndex((el) => el.options[0].option === 'A')
-      if (optionLen > -1) {
-        // 以A开头至下一个A前为一组
-        const options = []
-        for (let i = 0; i < list.length; i += 1) {
-          const el = list[i]
-          if (el.options[0].option === 'A') {
-            options.push({
-              answerNo: `（${options.length + 1 || 1}）`,
-              options: [el.options[0]],
-            })
-          } else {
-            options[options.length - 1].options.push(el.options[el.options.length - 1])
-          }
-        }
-        this.optionGroup = options
-      }
-    },
     // 上传视频
     async uploadVideo(options) {
       const {
@@ -449,6 +367,7 @@ export default {
       })) || { dataInfo: {} }
       this.categories = res.dataInfo.data || []
     },
+    // 选项操作icon
     getIcons(index, parentIndex) {
       const icons = [
         {
@@ -500,51 +419,32 @@ export default {
         content: '确定要删除该小题吗?',
         onOk: async () => {
           this.loading = true
-          const option = JSON.parse(JSON.stringify(this.option))
-          if (this.isFillup) {
+          // const option = JSON.parse(JSON.stringify(this.option))
+          // 删除完小题，当前题目设置答案状态为false
+          if (this.isOptionGroup) {
             // 删除完形填空小题
-            option.splice(index, 1)
-            const { table, text } = formatTableString(option)
-            this.updateTable(table, text, 'del')
-          } else if (this.isOptionGroup) {
-            // 删除分组小题，直接删除
-            const contentOptions = this.currentContent.filter((el) => el.options && el.options.length)
-            // 找到实际contentOptions里的index
-            let actualIndex = 0
-            await option.slice(0, index + 1).forEach((el, i) => {
-              actualIndex += i === index ? 0 : el.options.length
-            })
-            contentOptions.splice(actualIndex, option[index].options.length)
-            const futureOption = this.currentQuestion.filter((el) => !el.option || !el.options.length).concat(contentOptions)
-            this.updateOptions({ content: futureOption, type: 'del' })
+            const { table } = formatTableString(this.option)
+            const parser = new DOMParser()
+            const dom = parser.parseFromString(table, 'text/html')
+            const trs = Array.from(dom.body.getElementsByTagName('tr'))
+            trs.splice(index, 1)
+            const str = trs.map((el, i) => {
+              const tds = Array.from(el.getElementsByTagName('td')).map((item) => item.innerText)
+              // 匹配题号
+              const noReg = new RegExp(/[(|（]\d+[）|)]/)
+              const no = noReg.exec(tds[0]) || ['']
+              let text = tds[0]
+              if (no[0]) {
+                text = tds[0].replace(no[0], `（${i + 1}）`).trim()
+              }
+              tds.splice(0, 1, text)
+              return `<tr> ${tds.map((item) => `<td> <span> ${item.trim()} </span> </td> \r`).join(' ')} </tr> \r`
+            }).join(' ')
+            this.updateEditingItem('del', `<table> \r <tbody> \r ${str} \r </tbody> \r </table>`)
           }
-          this.clearAnswer()
+          this.loading = false
         },
       })
-    },
-    updateTable(table, text) {
-      const index = this.content.findIndex(
-        (el) => el.itemId === this.currentItemId,
-      )
-      const endIndex = this.currentQuestion.length + index
-      // console.log(this.currentQuestion[this.currentQuestion.length - 1])
-      const currentContent = [
-        ...this.currentQuestion.slice(0, this.currentQuestion.length - 1),
-        {
-          ...this.currentQuestion[this.currentQuestion.length - 1],
-          content: table,
-          text,
-        },
-      ]
-      this.updateState({
-        name: 'content',
-        value: [
-          ...this.content.slice(0, index),
-          ...currentContent,
-          ...this.content.slice(endIndex),
-        ],
-      })
-      this.loading = false
     },
     // 处理选项
     async handleOptionData(futureOption) {
@@ -571,11 +471,6 @@ export default {
       })
       this.updateOptions({ content })
     },
-    del(optionIndex, queIndex) {
-      // 删除一个选项
-      !this.isFillup && this.move('del', optionIndex, queIndex)
-      this.isFillup && this.adjustTable('del', optionIndex, queIndex)
-    },
     async adjustTable(direction, optionIndex, questionIndex) {
       this.loading = true
       const options = JSON.parse(
@@ -587,242 +482,258 @@ export default {
         ...option[questionIndex],
         options: currentAdjustTr,
       })
-      const { table, text } = formatTableString(option)
-      this.updateTable(table, text)
+      const { table } = formatTableString(option)
+      this.updateEditingItem(direction, table)
+      this.loading = false
     },
-    async move(direction, optionIndex, queIndex) {
+    // 更新当前编辑内容
+    updateEditingItem(direction, options) {
+      const obj = {}
+      if (direction === 'del') {
+        // 删除东西清空设置答案
+        console.log(this.$refs.formField.form)
+        Object.assign(obj, {
+          anser: false,
+          answers: '',
+        })
+        this.$refs.formField.form.resetFields(['answers'])
+      }
+      this.editingItem = {
+        ...this.editingItem,
+        options,
+        ...obj,
+      }
+    },
+    del(optionIndex, queIndex) {
+      // 删除一个选项
+      !this.isFillup && this.move('del', optionIndex, queIndex)
+      this.isFillup && this.adjustTable('del', optionIndex, queIndex)
+    },
+    async move(direction, optionIndex) {
+      const { options } = this.editingItem
       const num = {
         up: -1,
         down: 1,
       }
-      const contentOptions = this.currentQuestion.filter((el) => el.options && el.options.length)
-      if (this.isOptionGroup) {
-        const current = this.option[queIndex].options[optionIndex]
-        // 几组ABCD选项
-        // queIndex为当前选项所在小组的索引
-        // 分组的应该是一行一个option吧
-        let len = 0
-        // 找到实际contentOptions里的index
-        await this.option.slice(0, queIndex + 1).forEach((el, index) => {
-          len += index === queIndex ? optionIndex : el.options.length
-        })
-        const currentItemIndex = len
-        if (num[direction]) {
-          // 调整位置
-          const target = contentOptions[currentItemIndex + num[direction]].options[0]
-          contentOptions[currentItemIndex].options = [{
-            option: current.option,
-            value: target.value,
-          }]
-          contentOptions[currentItemIndex + num[direction]].options = [{
-            option: target.option,
-            value: current.value,
-          }]
-        } else {
-          // 删除
-          contentOptions.splice(currentItemIndex, 1)
-          // 修改当前option后的options的option
-          await contentOptions.forEach((el, index) => {
-            if (index > currentItemIndex - 1) {
-              el.options[0].option = optionLabel[index]
-            }
-          })
+      let res = JSON.parse(JSON.stringify(options))
+      const current = this.option[optionIndex]
+      if (num[direction]) {
+        const target = this.option[optionIndex + num[direction]]
+        res = {
+          ...res,
+          [current.option]: target.value,
+          [target.option]: current.value,
         }
       } else {
-        // 一行多个选项，多行
-        // 只要options有值，content里面对应选项肯定就是options对应的内容
-        // 找到当前option所在index
-        const current = this.option[optionIndex]
-        const targetItemIndex = contentOptions.findIndex((el) => el.options.findIndex((item) => item.option === current.option) > -1)
-        const currentItemIndex = contentOptions[targetItemIndex].options.findIndex((el) => el.option === current.option)
-        if (num[direction]) {
-          let target
-          const specialScene = (currentItemIndex === 0 && direction === 'up') || (currentItemIndex === contentOptions[targetItemIndex].options.length - 1 && direction === 'down')
-          if (specialScene) {
-            // 与不同content里的option调换位置
-            if (currentItemIndex === 0 && direction === 'up') {
-              target = contentOptions[targetItemIndex - 1].options[contentOptions[targetItemIndex - 1].options.length - 1]
-              contentOptions[targetItemIndex].options[currentItemIndex] = {
-                option: current.option,
-                value: target.value,
-              }
-              contentOptions[targetItemIndex - 1].options[contentOptions[targetItemIndex - 1].options.length - 1] = {
-                option: target.option,
-                value: current.value,
-              }
-            } else {
-              target = contentOptions[targetItemIndex + 1].options[0] || {}
-              contentOptions[targetItemIndex].options[currentItemIndex] = {
-                option: current.option,
-                value: target.value,
-              }
-              contentOptions[targetItemIndex + 1].options[0] = {
-                option: target.option,
-                value: current.value,
-              }
-            }
+        // 删除
+        delete res[current.option]
+        const newRes = {}
+        await Object.keys(res).forEach((el, i) => {
+          if (el !== optionLabel[i]) {
+            Object.assign(newRes, {
+              [optionLabel[i]]: res[el],
+            })
           } else {
-            // 单纯的在当前content里的option调换位置
-            target = contentOptions[targetItemIndex].options[currentItemIndex + num[direction]]
-            contentOptions[targetItemIndex].options.splice(currentItemIndex, 1, {
-              option: current.option,
-              value: target.value,
-            })
-            contentOptions[targetItemIndex].options.splice(currentItemIndex + num[direction], 1, {
-              option: target.option,
-              value: current.value,
+            Object.assign(newRes, {
+              [el]: res[el],
             })
           }
-        } else if (contentOptions[targetItemIndex].options.length > 1) {
-          // 删除多个option中的一个，注意更新option
-          contentOptions[targetItemIndex].options.splice(currentItemIndex, 1)
-          if (!contentOptions[targetItemIndex].options.length) {
-            contentOptions.splice(targetItemIndex, 1)
-          }
-          let index = 0
-          await contentOptions.forEach(async (el) => {
-            await el.options.forEach((item) => {
-              item.option = optionLabel[index]
-              index += 1
-            })
-          })
-        } else {
-          // 删除单个单行的option，注意更新option
-          contentOptions.splice(targetItemIndex, 1)
-          await contentOptions.forEach((el, index) => {
-            el.options[0].option = optionLabel[index] || ''
-          })
-        }
-      }
-      await contentOptions.forEach(async (el) => {
-        let str = ''
-        await el.options.forEach((item) => {
-          str += `${item.option}．${item.value}`
         })
-        el.content = str
-      })
-      const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(contentOptions)
-      this.updateOptions({ content: futureOption, type: direction })
-      direction === 'del' && this.clearAnswer()
+        res = newRes
+      }
+      this.updateEditingItem(direction, res)
     },
     moveDown(optionIndex, queIndex) {
-      !this.isFillup && this.move('down', optionIndex, queIndex)
+      !this.isFillup && this.move('down', optionIndex)
       this.isFillup && this.adjustTable('down', optionIndex, queIndex)
     },
     moveUp(optionIndex, queIndex) {
-      !this.isFillup && this.move('up', optionIndex, queIndex)
+      !this.isFillup && this.move('up', optionIndex)
       this.isFillup && this.adjustTable('up', optionIndex, queIndex)
     },
-    // 添加选项
-    async pushOption() {
+    // 添加小题/选项
+    async pushOption(type) {
+      const currentLen = this.option.length
+      // 添加小题
       if (this.isFillup) {
-        this.loading = true
-        // 完形填空
-        const { option } = this
-        option.push({
-          answerNo: `（${option.length + 1}）`,
-          options: optionLabel.slice(0, this.optionLen).map((el) => ({
-            option: el,
-            value: '',
-          })),
-        })
-        const { table, text } = formatTableString(option)
-        this.updateTable(table, text)
-      } else {
-        // 普通选择题只需要在当前选项行push即可
-        const { option } = this
-        // 选项分开或者没有选项的
-        if (this.optionSplit || !this.option.length) {
-          const {
-            itemId, id, anser, type,
-          } = this.currentQuestion[0]
-          // 选项分开的直接增加一行新content
-          const content = this.currentQuestion.concat([
-            {
-              contentId: v4(),
-              itemId,
-              id,
-              anser,
-              type,
-              content: `${optionLabel[option.length]}．`,
-              text: `${optionLabel[option.length]}．`,
-              options: [{ option: optionLabel[option.length], value: '' }],
-            },
-          ])
-          this.updateOptions({ content })
-        } else {
-          this.handleOptionData([
-            ...option,
-            { option: optionLabel[option.length], value: '' },
-          ])
+        if (type === 'optionGroup') {
+          // 添加小题，添加tr
+          const { table } = formatTableString(this.option.concat([{
+            answerNo: this.option.length,
+            options: optionLabel.filter((el, i) => i <= this.optionLen).map((el, i) => ({
+              option: optionLabel[i],
+              value: '',
+            })),
+          }]))
+          this.updateEditingItem('add', table)
         }
+      } else {
+        // 添加选项
+        this.updateEditingItem('add', {
+          ...this.editingItem.options,
+          [optionLabel[currentLen]]: '',
+        })
       }
+    },
+    // 收集新table内容
+    getTableString(values) {
+      const arr = []
+      for (let i = 0; i < this.option.length; i += 1) {
+        const el = this.option[i]
+        const opts = []
+        const answerNo = `（${i + 1}）`
+        for (let j = 0; j < el.options.length; j += 1) {
+          opts.push({
+            option: optionLabel[j],
+            value: values[`${answerNo}-${optionLabel[j]}`],
+          })
+        }
+        arr.push({
+          answerNo,
+          options: opts,
+        })
+      }
+      const { table } = formatTableString(arr)
+      return table
     },
     // 保存内容
     save() {
       this.$refs.formField.form.validateFields(async (err, values) => {
         if (!err) {
-          const { questionTypeId, quesTypeNameId, classifyId } = this
-          if (this.isFillup || this.isOptionGroup) {
-            // 处理完形填空选项，信息匹配、阅读理解也不需要传option
-            const { option } = this
-            await option.forEach(async (el) => {
-              await el.options.forEach((item) => {
-                delete values[`${el.answerNo}-${item.option}`]
-              })
-            })
-            // 选项放入content，即传完整的currentQuestion
-            values.content = this.currentQuestion.map((el, i) => {
-              if (i === 0) {
-                const no = /^(\d+)[.、．:：，]+/.exec(el.content.trim()) ? /^(\d+)[.、．:：，]+/.exec(el.content.trim())[0] : ''
-                return el.content.replace(no, '')
-              }
-              return el.content
-            }).join(' ')
-          } else if (this.option.length && [1, 3].includes(questionTypeId)) {
-            // 普通选择题/判断题 传option
-            const optionValues = {}
-            const { option } = this
-            // 把原来content里的options也更新一波
-            const options = this.currentQuestion.filter((el) => el.options && el.options.length)
-            await options.forEach(async (el) => {
-              await el.options.forEach((item) => {
-                item.value = values[item.option]
-              })
-            })
-            const futureOption = this.currentQuestion.filter((el) => !el.options || !el.options.length).concat(options)
-            this.updateOptions({ content: futureOption, type: 'save' })
-            // 修改option
-            await option.forEach((el) => {
-              Object.assign(optionValues, {
-                [el.option]: values[el.option],
-              })
-              delete values[el.option]
-            })
-            values.options = JSON.stringify(optionValues)
-          }
+          // 更新当前items
+          const itemIndex = this.items.findIndex((el) => el.itemId === this.currentItemId)
           const { videoUrl } = values
-          this.updateItems({
-            ...values,
-            videoUrl: videoUrl && videoUrl[0] ? [{ ...videoUrl[0], url: this.fileUrl }] : undefined,
-            questionTypeId,
-            quesTypeNameId,
-            bookId: this.editionId,
-            editionId: this.gradeId,
-            categoryId: this.cateId,
-            classifyId,
+          let options = {}
+          if (this.option.length) {
+            // 处理选项内容
+            if (!this.isFillup) {
+              await this.option.forEach((el, i) => {
+                Object.assign(options, {
+                  [optionLabel[i]]: values[optionLabel[i]],
+                })
+              })
+            } else {
+              // 完形填空内容，更新表格
+              options = this.getTableString(values)
+            }
+          }
+          this.updateState({
+            name: 'items',
+            value: [
+              ...this.items.slice(0, itemIndex),
+              {
+                ...this.editingItem,
+                ...values,
+                videoUrl: videoUrl && videoUrl[0] ? [{ ...videoUrl[0], url: this.fileUrl }] : undefined,
+                bookId: this.editionId,
+                editionId: this.gradeId,
+                categoryId: this.cateId,
+                anser: true,
+                options,
+              },
+              ...this.items.slice(itemIndex + 1),
+            ],
           })
+          console.log(this.items)
+          // 更新原content数组
+          this.updateContent(values)
         }
       })
     },
-    handleChange(props, values) {
-      // console.log(values)
-      if (values.optionNum) {
-        this.optionLen = values.optionNum
+    // 更新content原数组内容
+    updateContent(values) {
+      /**
+       * 题干可能是几行content，选项也可能是几行content，Jesus
+       * 选择题得区分题干和选项，题干还得处理题号的问题😊
+       * items里面存了一个字段，contentId数组，里面是当前item在content数组里对应的contentId们
+       */
+      const currentQuestion = []
+      const isEng = [7, 16, 21].includes(this.subjectId)
+      const engReg = new RegExp(/^[A-Z]{1}[.、．:：]+/) // 英语题用
+      const otherReg = new RegExp(/[A-Z]{1}[.、．:：]+/) // 非英语题用
+      const reg = isEng ? engReg : otherReg
+      let num = 0 // 记录选项数
+      // 题干都放同一个content里，即第一条数据
+      const questionNo = this.itemIds.findIndex((item) => item === this.currentItemId) + 1
+      currentQuestion.push({
+        ...this.currentQuestion[0],
+        content: `${questionNo}. ${this.editingItem.content}`,
+      })
+      // 剩余的内容
+      for (let i = 1; i < this.currentQuestion.length; i += 1) {
+        const el = this.currentQuestion[i]
+        let { content, text } = el
+        content = content.trim()
+        const {
+          contentId, itemId, id, questionTypeId, classifyId,
+        } = el
+        let flag = false
+        if (this.isFillup && content.startsWith('<table')) {
+          // 完形填空的表格处理
+          text = formatTableString(this.option).text
+          content = this.getTableString(values)
+        } else if (this.option.length) {
+          // 检查当前content有无选项
+          const hasOption = reg.exec(content)
+          if (hasOption) {
+            // 检查有几个选项，要注意选项是否调整了顺序，以及内容是否改变
+            let newContent = ''
+            let otherOption = hasOption
+            do {
+              // 因为富文本框里的内容是html，取innerHTML
+              const tagReg = new RegExp(/<p[^>]*>(.*?)<\/p>/)
+              let value = values[optionLabel[num]]
+              if (tagReg.exec(value)) {
+                // 取innerHTML
+                const parser = new DOMParser()
+                const dom = parser.parseFromString(value, 'text/html')
+                value = dom.getElementsByTagName('body')[0].childNodes[0].innerHTML
+              }
+              newContent += `${optionLabel[num]}. ${value} `
+              const rest = otherOption.input.replace(otherOption[0], '')
+              otherOption = reg.exec(rest)
+              if (otherOption) {
+                content = rest.split(otherOption[0])[1] || ''
+                if (content) {
+                  content = `${otherOption[0]}${content}`
+                }
+              }
+              num += 1
+            } while (otherOption && values[optionLabel[num]])
+            content = newContent
+          } else {
+            // 题干部分内容
+            flag = true
+          }
+        }
+        !flag && currentQuestion.push({
+          ...el,
+          itemId,
+          contentId,
+          content,
+          id,
+          questionTypeId,
+          classifyId,
+          text,
+        })
       }
+      const start = this.content.findIndex((el) => el.itemId === this.currentItemId)
+      this.updateState({
+        name: 'content',
+        value: [
+          ...this.content.slice(0, start),
+          ...currentQuestion,
+          ...this.content.slice(start + this.currentQuestion.length),
+        ],
+      })
+      this.$message.success('保存成功')
     },
-    handleEditorChange(event, name) {
-      console.log(event, name)
+    handleChange(props, values) {
+      if (values.optionNum) {
+        // 选项数
+        this.optionLen = values.optionNum
+        // 根据选项数来增加/减少选项数目
+      }
     },
   },
 }

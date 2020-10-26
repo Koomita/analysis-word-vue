@@ -34,18 +34,33 @@ export default {
       style: '',
       loading: false,
       value: '',
-      init: false,
       editorHeight: document.body.offsetHeight - 150,
       items: [], // 保存的新题块
       showModal: false,
+      clearItems: false,
     }
   },
   computed: {
-    ...mapState(['step', 'fileInfo', 'subjectId', 'content', 'itemIds', 'subjects', 'questionTypes', 'subjectName']),
+    ...mapState([
+      'step',
+      'fileInfo',
+      'subjectId',
+      'content',
+      'itemIds',
+      'subjects',
+      'questionTypes',
+      'subjectName',
+    ]),
     itemContents() {
       return this.content
         .filter((el) => Boolean(el.itemId))
         .map((el) => el.itemId)
+    },
+    savedItems() {
+      return this.$store.state.items
+    },
+    init() {
+      return this.savedItems.length > 0 || this.itemIds.length > 0
     },
   },
   watch: {
@@ -59,8 +74,13 @@ export default {
       deep: true,
     },
     itemIds: {
-      handler() {
+      handler(nv, ov) {
         if (this.init) {
+          this.clearItems = false
+          this.updateValue()
+        } else if (!nv.length && ov.length) {
+          // 清空题目
+          this.clearItems = true
           this.updateValue()
         }
       },
@@ -68,9 +88,12 @@ export default {
     },
   },
   created() {
-    this.init = false
     this.updateState({ name: 'step', value: 0 })
-    this.getContent()
+    if (!this.init) {
+      this.getContent()
+    } else {
+      this.updateValue()
+    }
   },
   methods: {
     ...mapMutations(['updateState', 'delItem', 'updateSubjects', 'updateContent']),
@@ -88,7 +111,6 @@ export default {
       }
       this.updateState({ name: 'subjects', value: subjects })
       this.updateState({ name: 'content', value: content ? content.filter((el) => el.content) : [] })
-      this.updateState({ name: 'items', value: [] })
       this.appendStyleTag(style)
       this.loading = false
     },
@@ -111,25 +133,35 @@ export default {
     },
     formatContent() {
       const itemIds = []
+      const contentIds = []
       let detail = ''
       if (this.content.length) {
         this.content.forEach((el) => {
           const {
-            itemId, id, contentId,
+            itemId, id, contentId, classifyId,
           } = el
           let { content } = el
-          const arr = this.init ? this.itemIds : this.itemContents
+          const arr = this.init || this.clearItems ? this.itemIds : this.itemContents
           const paraIndex = arr.findIndex((item) => item === itemId)
-          content = content.indexOf('<table') > -1 ? `${content.replace('<table', `<table data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"`)}` : content
-          if (paraIndex > -1) {
-            if (!itemIds.includes(itemId)) {
-              itemIds.push(itemId)
-              detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}">&nbsp;</span>${content}</p>`
-            } else {
-              detail += `<p class="question-block data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
+          const tags = ['<table', '<img', '<svg']
+          // 给table、img这些标签加上contentId、itemId
+          for (let i = 0; i < tags.length; i += 1) {
+            if (content.indexOf(tags[i]) > -1) {
+              content = `${content.replace(tags[i], `${tags[i]} data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}`)}`
             }
-          } else {
-            detail += `<p data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}">${content}</p>`
+          }
+          if (!contentIds.includes(contentId)) {
+            contentIds.push(contentId)
+            if (paraIndex > -1) {
+              if (!itemIds.includes(itemId)) {
+                itemIds.push(itemId)
+                detail += `<p class="question-block mt8" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}"><span class="del-icon" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}"  data-classifyid="${classifyId}">&nbsp;</span>${content}</p>`
+              } else {
+                detail += `<p class="question-block" data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}">${content}</p>`
+              }
+            } else {
+              detail += `<p data-itemid="${itemId}" data-id="${id}" data-contentid="${contentId}" data-classifyid="${classifyId}">${content}</p>`
+            }
           }
         })
       }
@@ -140,7 +172,6 @@ export default {
       const { detail, itemIds } = this.formatContent()
       this.updateState({ name: 'itemIds', value: itemIds })
       this.value = detail
-      this.init = true
     },
     updateValue() {
       // 更新数据
@@ -151,11 +182,32 @@ export default {
       // 把字符串变为数组
       const parser = new DOMParser()
       const currentDom = parser.parseFromString(val, 'text/html')
+      // 把回车符过滤掉
       const currentContent = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((el) => el.nodeName !== '#text')
-      const contents = currentContent.map((el) => ({
-        content: el.localName === 'table' ? `<table>${el.innerHTML}</table>` : el.innerHTML,
-        contentId: el.dataset.contentid,
-      }))
+      console.log('currentContent', currentContent)
+      const contents = currentContent.map((el) => {
+        const { childNodes } = el
+        let { innerHTML } = el
+        const {
+          contentid, classifyid, itemid, id,
+        } = el.dataset
+        const childs = Array.from(childNodes || [])
+        if (childs.length && childs[0].nodeName === 'SPAN' && childs[0].className === 'del-icon') {
+          // 把删除样式的span去掉
+          const cons = childs.filter((item) => item.className !== 'del-icon')
+          innerHTML = cons.map((item) => item.outerHTML).join('')
+        } else if (childs.length && childs[0].nodeName === 'IMG') {
+          console.log('img', childs)
+        } else if (el.localName === 'table') {
+          innerHTML = el.outerHTML.replace(` data-itemid="${itemid}" data-id="${id}" data-contentid="${contentid}" data-classifyid="${classifyid}"`, '')
+          // console.log('table', innerHTML)
+        }
+        return {
+          content: innerHTML,
+          contentId: contentid,
+          classifyId: classifyid,
+        }
+      })
       let hasContentId = true
       contents.every((el) => {
         hasContentId = Boolean(el.contentId)
@@ -164,7 +216,6 @@ export default {
       return hasContentId ? contents : []
     },
     change(val) {
-      this.value = val
       const itemIds = []
       const contentIds = []
       const contents = this.revertContent(val).map((el) => {
@@ -172,6 +223,7 @@ export default {
         const item = this.content[itemIndex] || {}
         let { contentId, itemId } = item
         if (itemIds.includes(itemId) && contentIds.includes(contentId)) {
+          // 拆分原来已分好的题目，重新赋值
           contentId = v4()
           itemId = v4()
         }
@@ -197,6 +249,7 @@ export default {
         contents.push({
           content: nodes.innerHTML,
           contentId: nodes.dataset.contentid,
+          classifyId: nodes.classifyId,
         })
       }
       this.items = contents
@@ -204,36 +257,66 @@ export default {
       this.showModal = true
     },
     async addQuestion({ questionTypeId, id }) {
+      const {
+        items, itemIds, content, subjects,
+      } = this
       // 更新题块
-      const index = this.content.findIndex((el) => el.contentId === this.items[0].contentId)
+      const index = content.findIndex((el) => el.contentId === this.items[0].contentId)
       // 生成新的itemId
       const itemId = v4()
-      // console.log('new itemId', itemId)
-      const newItems = this.items.map((el, i) => ({
-        ...this.content[index + i],
+      const subject = subjects.find((el) => el.classifyId === this.items[0].classifyId)
+      console.log(subjects, subject)
+      // 先看当前subjects是否还有选中题目的classifyId，没有才更新为id
+      const classifyId = subject?.classifyId || id
+      const newItems = items.map((el, i) => ({
+        ...content[index + i],
         ...el,
         itemId,
         id,
         questionTypeId,
+        classifyId, // 更新classifyId
       }))
+      /**
+       * 更新itemIds
+       * 先找出当前题目的前一题itemId
+       * 再找出前一题itemId在itemIds数组里的位置
+       */
+      const prevItemId = content[index - 1].itemId
+      const prevIndex = itemIds.findIndex((el) => el === prevItemId)
+      this.updateState({
+        name: 'itemIds',
+        value: [
+          ...itemIds.slice(0, prevIndex + 1), // 截取当前itemId前部分
+          itemId, // 塞入当前itemId
+          ...itemIds.slice(prevIndex + 1), // 截取当前itemId后部分
+        ],
+      })
+      // 更新内容
       this.updateContent({
-        content: [...this.content.slice(0, index), ...newItems, ...this.content.slice(index + newItems.length)],
+        content: [...content.slice(0, index), ...newItems, ...content.slice(index + newItems.length)],
         newItemId: itemId,
       })
-      const { subjects } = this
-      const subjectIndex = subjects.findIndex((el) => el.id === id)
+      // 更新现有题量
+      let subjectIndex = subjects.findIndex((el) => el.id === id)
+      let item = subjects[subjectIndex] || this.questionTypes.find((el) => el.id === id)
       if (subjectIndex > -1) {
-        // 更新现有题量
-        this.updateSubjects({ item: { ...subjects[subjectIndex], count: subjects[subjectIndex].count + 1 }, index: subjectIndex > -1 ? subjectIndex : subjects.length })
+        item = {
+          ...item,
+          count: subjects[subjectIndex].count + 1,
+        }
       } else {
-        const item = this.questionTypes.find((el) => el.id === id)
-        this.updateSubjects({
-          item: {
-            subjectTitle: item.name, count: 1, id, questionTypeId,
-          },
-          index: subjects.length,
-        })
+        subjectIndex = subjects.length
+        // 多了个classifyId，新增的就把id当作classifyId
+        item = {
+          subjectTitle: item.name,
+          count: 1,
+          id,
+          questionTypeId,
+          classifyId,
+        }
       }
+      console.log(item)
+      this.updateSubjects({ item, index: subjectIndex })
       this.showModal = false
     },
   },

@@ -14,9 +14,9 @@
      :pagination="false"
      :row-key="record => record.classifyId"
     >
-      <template slot="action" slot-scope="text, record">
-        <a-button type="link" @click="edit(record)">编辑</a-button>
-        <a-button type="link" @click="del(record)">删除</a-button>
+      <template slot="action" slot-scope="text, record, $index">
+        <a-button type="link" @click="edit(record, $index)">编辑</a-button>
+        <a-button type="link" @click="del(record, $index)">删除</a-button>
       </template>
     </a-table>
     <p class="btn-box">
@@ -59,10 +59,12 @@ export default {
       id: '', // 当前题型id
       count: '', // 当前题型数量
       form: this.$form.createForm(this),
+      classifyId: '', // 当前题型的分类id
+      currentIndex: -1, // 当前题型索引
     }
   },
   computed: {
-    ...mapState(['subjects', 'itemIds', 'questionTypes']),
+    ...mapState(['subjects', 'itemIds', 'questionTypes', 'subjectId', 'content', 'items']),
     columns() {
       return [{
         title: '题型',
@@ -78,24 +80,152 @@ export default {
         scopedSlots: { customRender: 'action' },
       }]
     },
+    countSubjects() {
+      if (!this.items.length) {
+        return this.subjects
+      }
+      const subjects = []
+      this.subjects.forEach((el) => {
+        const { classifyId } = el
+        const currentClass = this.items.filter((item) => item.classifyId === classifyId)
+        subjects[subjects.length - 1] = {
+          ...el,
+          count: currentClass.length,
+        }
+      })
+      return subjects
+    },
   },
   mounted() {
-    this.getQuestionTypes()
+    !this.items.length && this.getQuestionTypes()
   },
   methods: {
     ...mapMutations(['updateState', 'delQuestionType', 'updateSubjects']),
     ...mapActions(['getQuestionTypes', 'getQuestionClasses']),
-    next() {
-      // 下一步，默认编辑第一题题目详情
+    checkOptions(content) {
+      const isEng = [7, 16, 21].includes(this.subjectId)
+      const engReg = new RegExp(/^[A-Z]{1}[.、．:：]+/) // 英语题用
+      const otherReg = new RegExp(/[A-Z]{1}[.、．:：]+/) // 非英语题用
+      const reg = isEng ? engReg : otherReg
+      const result = reg.exec(content)
+      return result ? result[0] : content.startsWith('<table')
+    },
+    getOptions(content) {
+      const isEng = [7, 16, 21].includes(this.subjectId)
+      const engReg = new RegExp(/^[A-Z]{1}[.、．:：]+/) // 英语题用
+      const otherReg = new RegExp(/[A-Z]{1}[.、．:：]+/) // 非英语题用
+      // 完形填空
+      if (isEng && content.startsWith('<table')) {
+        return {
+          text: '',
+          option: content,
+        }
+      }
+      const reg = isEng ? engReg : otherReg
+      let opContent = content
+      const option = {}
+      let text = content
+      do {
+        // 匹配选项开头
+        const result = reg.exec(opContent.trim())
+        if (result) {
+          // 取出选项label
+          const label = result[0].replace(/[.、．:：]/, '').trim()
+          // res为选项内容
+          let res = result.input.replace(result[0], '').trim()
+          // 检查剩余内容是否还包含其他选项
+          const includeOtherOption = otherReg.exec(res)
+          if (includeOtherOption) {
+            // 如果有，重新赋值选项内容
+            const current = res.split(includeOtherOption[0])
+            res = current[0] || ''
+          }
+          Object.assign(option, {
+            [label]: res.trim(),
+          })
+          // 内容去掉已匹配到的选项内容
+          opContent = opContent.trim().replace(result[0], '').replace(res, '').trim()
+          text = text.trim().replace(result[0], '').replace(res, '').trim()
+        } else {
+          // 没有选项则跳出循环
+          opContent = ''
+        }
+      } while (opContent)
+      return {
+        text,
+        option,
+      }
+    },
+    async next() {
+      // 获取当前content，map成items
+      const items = []
+      let finalContent = ''
+      await this.content.filter((el) => el.itemId && el.content && el.contentId).forEach((el) => {
+        const {
+          itemId, id, questionTypeId, classifyId, contentId,
+        } = el
+        let { content } = el
+        content = content.trim()
+        let options
+        if (this.itemIds.includes(itemId)) {
+          // 查看当前content有无options
+          if (this.checkOptions(content) && [1, 5, 8].includes(questionTypeId)) {
+            const { text, option } = this.getOptions(content)
+            options = typeof option === 'string' ? option : ({ ...options, ...option })
+            content = text.trim()
+          }
+          // 去掉题号
+          const test = /^(\d+)[.、．:：，]+/.exec(content) || ['']
+          const no = test[0]
+          if (!items.find((item) => item.itemId === itemId)) {
+            const storedItem = this.items.find((item) => item.itemId === itemId)
+            finalContent = content.replace(no, '')
+            items.push({
+              ...storedItem,
+              content: finalContent,
+              options,
+              anser: storedItem?.anser || false,
+              id: storedItem?.id || id,
+              questionTypeId: storedItem?.questionTypeId || questionTypeId,
+              itemId,
+              classifyId,
+              contentIds: [contentId], // 后面设置答案时，更新content数组有用
+            })
+          } else {
+            const index = items.findIndex((item) => item.itemId === itemId)
+            let opt
+            if (typeof options === 'string' || typeof items[index].options === 'string') {
+              opt = options || items[index].options
+            } else {
+              opt = {
+                ...items[index].options,
+                ...options,
+              }
+            }
+            const { contentIds } = items[index]
+            finalContent += content
+            items.splice(index, 1, {
+              ...items[index],
+              options: opt,
+              contentIds: contentId ? contentIds.concat([contentId]) : contentIds,
+              content: finalContent,
+            })
+          }
+        }
+      })
+      // 默认编辑第一题题目详情
+      this.updateState({ name: 'items', value: items })
       this.updateState({ name: 'currentItemId', value: this.itemIds[0] })
       this.updateState({ name: 'step', value: 1 })
       this.getQuestionClasses()
       this.$router.push('/modify/detail')
     },
-    edit(record) {
-      const { id, count } = record
+    edit(record, index) {
+      const { id, count, classifyId } = record
       this.id = id
       this.count = count
+      this.classifyId = classifyId
+      this.currentIndex = index
       this.showEditModal = true
     },
     del(record) {
@@ -117,6 +247,7 @@ export default {
         onOk: () => {
           this.updateState({ name: 'itemIds', value: [] })
           this.updateState({ name: 'subjects', value: [] })
+          this.updateState({ name: 'items', value: [] })
         },
       })
     },
@@ -124,10 +255,51 @@ export default {
       // 更新题型数量
       this.form.validateFields((err, values) => {
         if (!err) {
-          const { subjects } = this
-          const index = subjects.findIndex((el) => el.id === values.id)
-          this.updateSubjects({ item: { ...subjects[index], ...values }, index })
+          const {
+            subjects, questionTypes, classifyId, currentIndex, content,
+          } = this
+          const item = subjects.find((el) => el.id === values.id)
+          const questionType = questionTypes.find((el) => el.id === values.id)
+          this.updateSubjects({
+            item: {
+              ...item,
+              ...values,
+              subjectTitle: questionType.name,
+              classifyId,
+            },
+            index: currentIndex,
+          })
+          // 把原来content的questionTypeId改为修改后的id
+          const startIndex = content.findIndex((el) => el.classifyId === classifyId)
+          const nextClassifyId = subjects[currentIndex + 1]?.classifyId
+          let endIndex = -1
+          if (!nextClassifyId) {
+            // 找content里面当前classifyId最后出现的位置
+            for (let i = startIndex; i < content.length; i += 1) {
+              const currentClassifyId = content[i].classifyId
+              if (currentClassifyId !== classifyId) {
+                endIndex = i
+                break
+              }
+            }
+          } else {
+            // 找content里面下一个classifyId首次出现的位置
+            endIndex = content.findIndex((el) => el.classifyId === nextClassifyId)
+          }
+          this.updateState({
+            name: 'content',
+            value: [
+              ...content.slice(0, startIndex),
+              ...content.filter((el, index) => index >= startIndex && index < endIndex && el.itemId).map((el) => ({
+                ...el,
+                id: values.id,
+                questionTypeId: questionType.questionTypeId,
+              })),
+              ...content.slice(endIndex),
+            ],
+          })
           this.showEditModal = false
+          this.$forceUpdate()
         }
       })
     },

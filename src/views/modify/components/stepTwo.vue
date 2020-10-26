@@ -16,7 +16,7 @@
         <p class="flex-item">
           <span
            v-for="(num, numIndex) in que.number"
-           :key="`${que.id}-${num}`"
+           :key="`${que.classifyId}-${num}`"
            :class="['block', !que.answer[numIndex] ? 'error': '', checkActive(que, numIndex) ? 'active' : '']"
            @click="changeCurrentQuestion(que.itemId[numIndex])"
           >
@@ -46,19 +46,13 @@ export default {
   },
   computed: {
     ...mapState(['questionTypes', 'itemIds', 'content', 'currentItemId', 'items', 'subjectId', 'teacherId', 'subjects']),
-    questions() {
-      if (!this.content || !this.content.length || !this.itemIds || !this.itemIds.length) return []
-      return this.content.filter((el) => this.itemIds.includes(el.itemId))
-    },
     currentQuestions() {
       const list = []
-      if (this.subjects.length && this.itemIds.length && this.content.length) {
+      if (this.subjects.length && this.itemIds.length && this.items.length) {
         this.itemIds.forEach((el, i) => {
-          const target = this.questions.filter((item) => item.itemId === el)
+          const target = this.items.filter((item) => item.itemId === el)
           if (target.length) {
-            const {
-              id, anser, classifyId,
-            } = target[0]
+            const { id, anser, classifyId } = target[0]
             const index = list.findIndex((item) => `${item.classifyId}` === `${classifyId}`)
             if (index < 0) {
               const questionType = this.subjects.find((obj) => `${obj.classifyId}` === `${classifyId}`)
@@ -84,7 +78,12 @@ export default {
       return list
     },
     btnDisabled() {
-      return this.items.length !== this.itemIds.length
+      let savedNums = 0
+      this.items.filter((el) => el.anser).reduce(() => {
+        savedNums += 1
+        return true
+      }, 0)
+      return savedNums !== this.itemIds.length
     },
   },
   methods: {
@@ -100,16 +99,19 @@ export default {
     async upload() {
       this.updateState({ name: 'loading', value: true })
       const { items, subjectId, teacherId } = this
-      const values = []
-      await items.forEach(async (el) => {
+      const itemList = items.map((el) => {
         const answer = {}
+        let {
+          answers, videoUrl, options, content, analysis,
+        } = el
         const {
-          answers, questionTypeId, videoUrl, quesTypeNameId,
-          questionClassId, sourceId, difficultyCoefficient,
-          pointIds, bookId, categoryId, editionId, content,
-          options, analysis, explanation, comment,
-          dimensionPointIds, dimensionCapabilityIds,
-          dimensionAttainmentIds, dimensionCoreValueIds,
+          id, questionClassId, sourceId,
+          difficultyCoefficient, pointIds, bookId,
+          categoryId, editionId,
+          explanation, comment, dimensionPointIds,
+          dimensionCapabilityIds,
+          dimensionAttainmentIds,
+          dimensionCoreValueIds, questionTypeId,
         } = el
         /**
          * 选择题（含单选/多选）: 1
@@ -123,11 +125,12 @@ export default {
           */
         if (typeof answers === 'object') {
           // 多选
-          await answers.forEach((item, index) => {
+          for (let i = 0; i < answers.length; i += 1) {
+            const item = answers[i]
             Object.assign(answer, {
-              [index]: item.toUpperCase(),
+              [i]: item.toUpperCase(),
             })
-          })
+          }
         } else if ([1, 3, 5].includes(questionTypeId)) {
           let ans = []
           if (answers.indexOf('<p') > -1) {
@@ -138,21 +141,38 @@ export default {
             ans = list[0] ? list[0].textContent.split('') : []
           } else if (questionTypeId === 3) {
             // 判断题
-            ans = [answers]
+            ans = [this.removeTag(answers)]
           } else {
             ans = answers.split('')
           }
-          await ans.forEach((item, index) => {
+          for (let i = 0; i < ans.length; i += 1) {
+            const item = ans[i]
             Object.assign(answer, {
-              [index]: ![1, 5].includes(questionTypeId) ? item : item.toUpperCase(),
+              [i]: ![1, 5].includes(questionTypeId) ? item : item.toUpperCase(),
             })
-          })
+          }
         }
-        values.push({
-          answers: JSON.stringify(answer),
-          videoUrl: (videoUrl && videoUrl.length && videoUrl[0].url) || '',
+        answers = JSON.stringify(answer)
+        if (typeof options === 'object') {
+          const optionKeys = Object.keys(options)
+          for (let i = 0; i < optionKeys.length; i += 1) {
+            Object.assign(options, {
+              [optionKeys[i]]: this.removeTag(options[optionKeys[i]]),
+            })
+          }
+        }
+        options = JSON.stringify(options)
+        content = this.removeTag(content)
+        analysis = this.removeTag(analysis)
+        if (videoUrl && videoUrl.length) {
+          videoUrl = videoUrl[0].url
+        }
+        return {
+          answers,
           questionTypeId,
-          quesTypeNameId,
+          videoUrl,
+          options,
+          quesTypeNameId: id,
           questionClassId,
           sourceId,
           difficultyCoefficient,
@@ -161,7 +181,6 @@ export default {
           categoryId,
           editionId,
           content,
-          options,
           analysis,
           explanation,
           comment,
@@ -169,13 +188,14 @@ export default {
           dimensionCapabilityIds,
           dimensionAttainmentIds,
           dimensionCoreValueIds,
-        })
+        }
       })
+      // return console.log(items, itemList)
       try {
         const res = await this.$post('/api/paperupload/upload/ques.do', {
           subjectId,
           teacherId,
-          items: values,
+          items: itemList,
         })
         this.updateState({ name: 'loading', value: false })
         const { data } = res.dataInfo || { data: [] } // 试题id列表
@@ -194,6 +214,17 @@ export default {
     cancel() {
       this.showCompleteModal = false
       this.$router.replace('/')
+    },
+    // 去掉最外层p标签
+    removeTag(val) {
+      if (val.startsWith('<p')) {
+        const parser = new DOMParser()
+        const currentDom = parser.parseFromString(val, 'text/html')
+        const nodes = Array.from(currentDom.getElementsByTagName('body')[0].childNodes).filter((el) => el.nodeName !== '#text')
+        val = nodes.length > 1 ? nodes.map((el) => el.innerHTML).join('<br/>') : nodes[0].innerHTML
+        // console.log(nodes, val)
+      }
+      return val
     },
   },
 }
