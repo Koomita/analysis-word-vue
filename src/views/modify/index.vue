@@ -128,8 +128,14 @@ export default {
       }
     },
     del(itemId, id) {
-      // 删除题块
-      this.delItem({ itemId, id })
+      this.$confirm({
+        title: '提示',
+        content: '确定要删除该题目吗？',
+        onOk: () => {
+          // 删除题块
+          this.delItem({ itemId, id })
+        },
+      })
     },
     formatContent() {
       const itemIds = []

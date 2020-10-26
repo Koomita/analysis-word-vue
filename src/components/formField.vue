@@ -47,6 +47,7 @@
           v-for="opt in formItem.options"
           :key="opt[formItem.props && formItem.props.value || 'value']"
           :value="opt[formItem.props && formItem.props.value || 'value']"
+          :class="formItem.className || ''"
         >
           {{ opt[formItem.props && formItem.props.label || 'label'] }}
         </a-radio-button>
@@ -133,7 +134,6 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-
 .ant-radio-button-wrapper, .checkbox {
   display: inline-block;
   border-radius: 20px;
@@ -157,5 +157,10 @@ export default {
   &:not(.ant-radio-button-wrapper-disabled) {
     box-shadow: none;
   }
+  &.ant-radio-customed {
+    background-color: @primary-color;
+    color: #fff;
+  }
 }
+
 </style>

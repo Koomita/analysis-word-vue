@@ -22,7 +22,7 @@
 <script>
 // @ is an alias to /src
 import MainFrame from '@/components/frame.vue'
-import { mapMutations } from 'vuex'
+import { mapActions, mapMutations } from 'vuex'
 import UploadModal from './components/uploadModal.vue'
 
 export default {

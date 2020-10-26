@@ -1,5 +1,8 @@
+import { mapState } from 'vuex'
+
 export default {
   computed: {
+    ...mapState(['currentQueClass', 'currentSource']),
     formOptions() {
       const getAnswerType = (type) => {
         switch (type) {
@@ -48,6 +51,7 @@ export default {
             label: 'label',
             value: 'value',
           },
+          className: 'ant-radio-customed',
           decorator: [
             'answers',
             {
@@ -79,6 +83,7 @@ export default {
         {
           label: '难度',
           type: 'radio',
+          className: 'ant-radio-customed',
           decorator: [
             'difficultyCoefficient',
             {
@@ -131,7 +136,7 @@ export default {
         },
         {
           label: '解析',
-          type: 'editor',
+          type: 'slot',
           decorator: [
             'analysis',
             {
@@ -180,20 +185,22 @@ export default {
         },
         decorator: ['questionClassId', {
           rules: [{ required: true, message: '请选择题类' }],
-          initialValue: this.editingItem?.questionClassId,
+          initialValue: this.editingItem?.questionClassId || this.currentQueClass,
         }],
+        className: 'ant-radio-customed',
       },
       {
         label: '来源',
         type: 'radio',
         options: this.sources,
+        className: 'ant-radio-customed',
         props: {
           label: 'sourceName',
           value: 'sourceId',
         },
         decorator: ['sourceId', {
           rules: [{ required: true, message: '请选择来源' }],
-          initialValue: this.editingItem?.sourceId,
+          initialValue: this.editingItem?.sourceId || this.currentSource,
         }],
       }])
       if (this.expend) {

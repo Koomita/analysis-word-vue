@@ -85,6 +85,16 @@
             <a-icon type="plus" />添加选项
           </a-button>
         </template>
+        <!-- 答案解析 -->
+        <div slot="analysis">
+          <p>
+            <a-button type="link" @click="setAnalysis">一键省略答案解析</a-button>
+          </p>
+          <editor v-decorator="['analysis', {
+            rules: [{ required: true, message: '请输入解析' }],
+            initialValue: editingItem.analysis,
+          }]" />
+        </div>
         <div slot="para" class="flex-select">
           <a-select v-model="editionId" placeholder="请选择" @change="getGrades">
             <a-select-option
@@ -306,6 +316,10 @@ export default {
   methods: {
     ...mapActions(['getAllLists']),
     ...mapMutations(['updateState', 'updateItems', 'updateOptions']),
+    // 一键省略答案解析
+    setAnalysis() {
+      this.form.setFieldsValue({ analysis: '略' })
+    },
     // 上传视频
     async uploadVideo(options) {
       const {
@@ -505,9 +519,15 @@ export default {
       }
     },
     del(optionIndex, queIndex) {
-      // 删除一个选项
-      !this.isFillup && this.move('del', optionIndex, queIndex)
-      this.isFillup && this.adjustTable('del', optionIndex, queIndex)
+      this.$confirm({
+        title: '提示',
+        content: '确定要删除该选项吗?',
+        onOk: () => {
+          // 删除一个选项
+          !this.isFillup && this.move('del', optionIndex, queIndex)
+          this.isFillup && this.adjustTable('del', optionIndex, queIndex)
+        },
+      })
     },
     async move(direction, optionIndex) {
       const { options } = this.editingItem
